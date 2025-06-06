@@ -17,6 +17,16 @@ export interface Character {
   image_url?: string;
 }
 
+export interface Opponent {
+  character_name: string;
+  description: string;
+  hp: number;
+  energy: number;
+  mana: number;
+  powers: Power[];
+  image_url: string;
+}
+
 export interface GameState {
   character: Character | null;
   isLoading: boolean;
