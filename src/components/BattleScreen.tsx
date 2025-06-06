@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
-import { Sword, Shield, Zap, Loader2, AlertCircle, RefreshCw, Skull } from 'lucide-react';
+import { Sword, Shield, Zap, Loader2, AlertCircle, Skull } from 'lucide-react';
 import type { Opponent } from '../types/game';
 
 // Fixed opponent for now
@@ -33,7 +33,7 @@ const FIXED_OPPONENT: Opponent = {
       damage_range: "35-50"
     }
   ],
-  image_url: "https://images.pexels.com/photos/1670977/pexels-photo-1670977.jpeg?auto=compress&cs=tinysrgb&w=512&h=512&fit=crop"
+  image_url: "https://i.ibb.co/HLNJNcKg/Gemini-Generated-Image-6tj37f6tj37f6tj3.jpg"
 };
 
 export function BattleScreen() {
@@ -60,8 +60,12 @@ export function BattleScreen() {
             throw new Error('Failed to generate image');
           }
 
-          const { url } = await response.json();
-          dispatch({ type: 'SET_CHARACTER_IMAGE', payload: url });
+          const data = await response.json();
+          if (data.url) {
+            dispatch({ type: 'SET_CHARACTER_IMAGE', payload: data.url });
+          } else {
+            throw new Error('No image URL returned');
+          }
         } catch (error) {
           console.error('Failed to generate character image:', error);
           dispatch({ type: 'SET_IMAGE_GENERATION_ERROR', payload: true });
@@ -80,10 +84,6 @@ export function BattleScreen() {
     dispatch({ type: 'SELECT_POWER', payload: powerIndex });
   };
 
-  const handleRetryImageGeneration = () => {
-    dispatch({ type: 'SET_IMAGE_GENERATION_ERROR', payload: false });
-  };
-
   const renderCharacterCard = (char: any, isPlayer: boolean = false) => (
     <div className="bg-gray-900/50 backdrop-blur-sm p-6 rounded-xl border border-purple-500/20">
       <div className="relative w-full aspect-square mb-6 rounded-lg overflow-hidden bg-gray-800/50">
@@ -95,14 +95,7 @@ export function BattleScreen() {
         ) : isPlayer && imageGenerationError ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center p-4">
             <AlertCircle className="w-8 h-8 text-red-400 mb-2" />
-            <p className="text-sm text-red-300 text-center mb-3">Failed to generate image</p>
-            <button
-              onClick={handleRetryImageGeneration}
-              className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm rounded-lg transition-colors"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Retry
-            </button>
+            <p className="text-sm text-red-300 text-center">Failed to generate image</p>
           </div>
         ) : char.image_url ? (
           <img
