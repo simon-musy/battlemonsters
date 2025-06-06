@@ -194,19 +194,6 @@ export function BattleScreen() {
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-red-200 text-center">Opponent</h3>
           {renderCharacterCard(FIXED_OPPONENT)}
-          
-          {/* Opponent Powers Preview */}
-          <div className="bg-gray-900/30 backdrop-blur-sm p-4 rounded-xl border border-red-500/20">
-            <h4 className="text-lg font-semibold text-red-200 mb-3">Enemy Abilities</h4>
-            <div className="space-y-2">
-              {FIXED_OPPONENT.powers.map((power, index) => (
-                <div key={index} className="flex justify-between items-center text-sm">
-                  <span className="text-red-300">{power.name}</span>
-                  <span className="text-red-400">{power.damage_range}</span>
-                </div>
-              ))}
-            </div>
-          </div>
         </div>
       </div>
     </div>
