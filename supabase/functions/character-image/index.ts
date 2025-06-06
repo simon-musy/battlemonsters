@@ -29,10 +29,10 @@ Deno.serve(async (req) => {
     });
 
     const result = await openai.images.generate({
-      model: "gpt-image-1",
+      model: "dall-e-3",
       prompt: prompt,
       size: "1024x1024",
-      quality: "low",
+      quality: "standard",
       n: 1
     });
 
