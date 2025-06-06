@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
       model: "dall-e-3",
       prompt: prompt,
       size: "1024x1024",
-      quality: "standard"
+      quality: "standard",
       n: 1
     });
 
