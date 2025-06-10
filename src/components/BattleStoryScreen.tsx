@@ -65,8 +65,8 @@ export function BattleStoryScreen() {
 
     const selectedPower = character.powers[state.selectedPower || 0];
     
-    // Create a more fantasy-friendly, less violent prompt
-    const prompt = `Fantasy art illustration: ${character.character_name} casting ${selectedPower.name} spell in a magical duel against ${FIXED_OPPONENT.character_name}. ${selectedPower.description}. Bright magical effects, glowing energy, mystical atmosphere, fantasy game art style, colorful spell effects, no violence or weapons, magical competition scene.`;
+    // Create intense, action-packed battle prompts
+    const prompt = `Epic fantasy battle scene: ${character.character_name} unleashing devastating ${selectedPower.name} attack against ${FIXED_OPPONENT.character_name}. ${selectedPower.description}. Intense combat action, explosive magical effects, dramatic lighting, debris flying, energy blasts, fierce expressions, dynamic poses, cinematic battle photography, high contrast, sparks and flames, destruction and chaos, epic confrontation, dark fantasy art style.`;
 
     // Add new panel or update existing one
     setBattlePanels(prev => {
@@ -257,7 +257,7 @@ export function BattleStoryScreen() {
             
             {battlePanels.length === 0 ? (
               <div className="text-center text-purple-300 py-12">
-                <p className="text-lg">Select an attack to begin the battle story!</p>
+                <p className="text-lg">Select an attack to begin the epic battle story!</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -270,14 +270,14 @@ export function BattleStoryScreen() {
                       <div className="w-full h-full flex flex-col items-center justify-center">
                         <Loader2 className="w-12 h-12 text-purple-400 animate-spin mb-4" />
                         <p className="text-purple-300 text-center px-4">
-                          Generating magical duel scene...
+                          Generating epic battle scene...
                         </p>
                       </div>
                     ) : panel.error ? (
                       <div className="w-full h-full flex flex-col items-center justify-center p-6">
                         <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
                         <p className="text-red-300 text-center mb-4">
-                          Failed to generate magical scene
+                          Failed to generate battle scene
                         </p>
                         <button
                           onClick={() => retryPanel(index)}
@@ -290,7 +290,7 @@ export function BattleStoryScreen() {
                     ) : panel.imageUrl ? (
                       <img
                         src={panel.imageUrl}
-                        alt={`Magical duel scene ${index + 1}`}
+                        alt={`Epic battle scene ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
                     ) : null}
