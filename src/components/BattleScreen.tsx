@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useGame } from '../context/GameContext';
 import { Sword, Shield, Zap, Loader2, AlertCircle, RefreshCw, Skull } from 'lucide-react';
 import { BattleStoryScreen } from './BattleStoryScreen';
@@ -40,6 +40,7 @@ const FIXED_OPPONENT: Opponent = {
 export function BattleScreen() {
   const { state, dispatch } = useGame();
   const { character, isGeneratingImage, imageGenerationError, selectedPower } = state;
+  const imageGenerationAttempted = useRef(false);
 
   // If a power is selected, show the battle story screen
   if (selectedPower !== undefined) {
@@ -47,7 +48,8 @@ export function BattleScreen() {
   }
 
   useEffect(() => {
-    if (character && !character.image_url && !isGeneratingImage && !imageGenerationError) {
+    if (character && !character.image_url && !isGeneratingImage && !imageGenerationError && !imageGenerationAttempted.current) {
+      imageGenerationAttempted.current = true;
       const generateImage = async () => {
         dispatch({ type: 'SET_GENERATING_IMAGE', payload: true });
         try {
@@ -91,6 +93,7 @@ export function BattleScreen() {
   };
 
   const handleRetryImageGeneration = () => {
+    imageGenerationAttempted.current = false;
     dispatch({ type: 'SET_IMAGE_GENERATION_ERROR', payload: false });
   };
 
