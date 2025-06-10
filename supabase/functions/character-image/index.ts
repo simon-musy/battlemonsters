@@ -1,5 +1,3 @@
-import OpenAI from 'jsr:@openai/openai';
-
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -38,37 +36,56 @@ Deno.serve(async (req) => {
 
     console.log(`[${requestId}] Image prompt: "${prompt}"`);
 
-    const apiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!apiKey) {
-      console.error(`[${requestId}] OpenAI API key not found in environment`);
-      throw new Error('OpenAI API key not configured');
+    const apiToken = Deno.env.get('REPLICATE_API_TOKEN');
+    if (!apiToken) {
+      console.error(`[${requestId}] Replicate API token not found in environment`);
+      throw new Error('Replicate API token not configured');
     }
 
-    console.log(`[${requestId}] Initializing OpenAI client...`);
-    const openai = new OpenAI({
-      apiKey: apiKey,
-    });
-
-    console.log(`[${requestId}] Making DALL-E API call...`);
+    console.log(`[${requestId}] Making Replicate API call...`);
     const startTime = Date.now();
     
-    const result = await openai.images.generate({
-      model: "dall-e-3",
-      prompt: prompt,
-      size: "1024x1024",
-      quality: "standard",
-      n: 1
+    const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'wait'
+      },
+      body: JSON.stringify({
+        input: {
+          prompt: prompt
+        }
+      })
     });
 
     const endTime = Date.now();
-    console.log(`[${requestId}] DALL-E API call completed in ${endTime - startTime}ms`);
+    console.log(`[${requestId}] Replicate API call completed in ${endTime - startTime}ms`);
+    console.log(`[${requestId}] Response status: ${response.status}`);
 
-    if (!result.data || result.data.length === 0) {
-      console.error(`[${requestId}] No image data returned from DALL-E`);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`[${requestId}] Replicate API error: ${response.status} - ${errorText}`);
+      throw new Error(`Replicate API error: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    console.log(`[${requestId}] Replicate API response:`, JSON.stringify(result, null, 2));
+
+    // Check if the prediction was successful
+    if (result.status === 'failed') {
+      console.error(`[${requestId}] Replicate prediction failed:`, result.error);
+      throw new Error(`Image generation failed: ${result.error}`);
+    }
+
+    // For flux-schnell, the output should be an array of image URLs
+    if (!result.output || !Array.isArray(result.output) || result.output.length === 0) {
+      console.error(`[${requestId}] No image output returned from Replicate`);
+      console.error(`[${requestId}] Full response:`, JSON.stringify(result, null, 2));
       throw new Error('No image generated');
     }
 
-    const imageUrl = result.data[0].url;
+    const imageUrl = result.output[0];
     if (!imageUrl) {
       console.error(`[${requestId}] No image URL in response`);
       console.error(`[${requestId}] Full response:`, JSON.stringify(result, null, 2));
@@ -85,12 +102,6 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error(`[${requestId}] Error in image generation:`, error);
     console.error(`[${requestId}] Error stack:`, error.stack);
-    
-    // Log additional error details for OpenAI API errors
-    if (error.response) {
-      console.error(`[${requestId}] OpenAI API error response:`, error.response.status);
-      console.error(`[${requestId}] OpenAI API error data:`, error.response.data);
-    }
     
     return new Response(
       JSON.stringify({ 
