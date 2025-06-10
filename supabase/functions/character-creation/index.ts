@@ -71,11 +71,11 @@ Deno.serve(async (req) => {
       messages: [
         {
           role: "system",
-          content: "You are a game master creating unique battle characters. Generate a character based on the user's prompt, including stats and powers that are balanced for gameplay. Always respond with valid JSON using the generate_character function."
+          content: "You are a game master creating unique battle characters. Generate a character based on the user's prompt, including stats and powers that are balanced for gameplay. CRITICAL: You must generate exactly 3 powers for each character - no more, no less. Always respond with valid JSON using the generate_character function."
         },
         {
           role: "user",
-          content: `Create a battle character based on this prompt: ${prompt}`
+          content: `Create a battle character based on this prompt: ${prompt}. Remember to include exactly 3 unique powers.`
         }
       ],
       tools: [
