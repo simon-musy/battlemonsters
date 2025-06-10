@@ -42,11 +42,7 @@ export function BattleScreen() {
   const { character, isGeneratingImage, imageGenerationError, selectedPower } = state;
   const imageGenerationAttempted = useRef(false);
 
-  // If a power is selected, show the battle story screen
-  if (selectedPower !== undefined) {
-    return <BattleStoryScreen />;
-  }
-
+  // Move useEffect to the top, before any conditional returns
   useEffect(() => {
     if (character && !character.image_url && !isGeneratingImage && !imageGenerationError && !imageGenerationAttempted.current) {
       imageGenerationAttempted.current = true;
@@ -85,6 +81,11 @@ export function BattleScreen() {
       generateImage();
     }
   }, [character, isGeneratingImage, imageGenerationError, dispatch]);
+
+  // If a power is selected, show the battle story screen
+  if (selectedPower !== undefined) {
+    return <BattleStoryScreen />;
+  }
 
   if (!character) return null;
 
