@@ -64,7 +64,9 @@ export function BattleStoryScreen() {
     if (!character) return;
 
     const selectedPower = character.powers[state.selectedPower || 0];
-    const prompt = `Comic book style battle scene: ${character.character_name} using ${selectedPower.name} against ${FIXED_OPPONENT.character_name}. ${selectedPower.description}. Dynamic action scene with dramatic lighting and effects.`;
+    
+    // Create a more fantasy-friendly, less violent prompt
+    const prompt = `Fantasy art illustration: ${character.character_name} casting ${selectedPower.name} spell in a magical duel against ${FIXED_OPPONENT.character_name}. ${selectedPower.description}. Bright magical effects, glowing energy, mystical atmosphere, fantasy game art style, colorful spell effects, no violence or weapons, magical competition scene.`;
 
     // Add new panel or update existing one
     setBattlePanels(prev => {
@@ -268,14 +270,14 @@ export function BattleStoryScreen() {
                       <div className="w-full h-full flex flex-col items-center justify-center">
                         <Loader2 className="w-12 h-12 text-purple-400 animate-spin mb-4" />
                         <p className="text-purple-300 text-center px-4">
-                          Generating battle scene...
+                          Generating magical duel scene...
                         </p>
                       </div>
                     ) : panel.error ? (
                       <div className="w-full h-full flex flex-col items-center justify-center p-6">
                         <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
                         <p className="text-red-300 text-center mb-4">
-                          Failed to generate battle scene
+                          Failed to generate magical scene
                         </p>
                         <button
                           onClick={() => retryPanel(index)}
@@ -288,7 +290,7 @@ export function BattleStoryScreen() {
                     ) : panel.imageUrl ? (
                       <img
                         src={panel.imageUrl}
-                        alt={`Battle scene ${index + 1}`}
+                        alt={`Magical duel scene ${index + 1}`}
                         className="w-full h-full object-cover"
                       />
                     ) : null}
