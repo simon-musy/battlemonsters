@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { Sword, Shield, Zap, Loader2, AlertCircle, RefreshCw, Skull } from 'lucide-react';
+import { BattleStoryScreen } from './BattleStoryScreen';
 import type { Opponent } from '../types/game';
 
 // Fixed opponent for now
@@ -38,7 +39,12 @@ const FIXED_OPPONENT: Opponent = {
 
 export function BattleScreen() {
   const { state, dispatch } = useGame();
-  const { character, isGeneratingImage, imageGenerationError } = state;
+  const { character, isGeneratingImage, imageGenerationError, selectedPower } = state;
+
+  // If a power is selected, show the battle story screen
+  if (selectedPower !== undefined) {
+    return <BattleStoryScreen />;
+  }
 
   useEffect(() => {
     if (character && !character.image_url && !isGeneratingImage && !imageGenerationError) {
