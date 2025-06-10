@@ -4,6 +4,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Array of aspect ratios for dynamic variety
+const ASPECT_RATIOS = ['1:1', '16:9', '21:9', '3:2', '2:3', '4:5', '5:4', '3:4', '4:3', '9:16', '9:21'];
+
+// Function to get random aspect ratio
+function getRandomAspectRatio(): string {
+  return ASPECT_RATIOS[Math.floor(Math.random() * ASPECT_RATIOS.length)];
+}
+
 Deno.serve(async (req) => {
   const requestId = crypto.randomUUID();
   console.log(`[${requestId}] Image generation request started`);
@@ -42,8 +50,30 @@ Deno.serve(async (req) => {
       throw new Error('Replicate API token not configured');
     }
 
+    // Generate random parameters for dynamic variety
+    const aspectRatio = getRandomAspectRatio();
+    const seed = Math.floor(Math.random() * 1000000); // Random seed for variety
+    
+    console.log(`[${requestId}] Using aspect ratio: ${aspectRatio}, seed: ${seed}`);
     console.log(`[${requestId}] Making Replicate API call...`);
     const startTime = Date.now();
+    
+    const requestBody = {
+      input: {
+        prompt: prompt,
+        aspect_ratio: aspectRatio,
+        seed: seed,
+        num_outputs: 1,
+        num_inference_steps: 4,
+        go_fast: true,
+        megapixels: "1",
+        output_format: "webp",
+        output_quality: 90,
+        disable_safety_checker: true
+      }
+    };
+
+    console.log(`[${requestId}] Request body:`, JSON.stringify(requestBody, null, 2));
     
     const response = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
       method: 'POST',
@@ -52,11 +82,7 @@ Deno.serve(async (req) => {
         'Content-Type': 'application/json',
         'Prefer': 'wait'
       },
-      body: JSON.stringify({
-        input: {
-          prompt: prompt
-        }
-      })
+      body: JSON.stringify(requestBody)
     });
 
     const endTime = Date.now();
@@ -70,6 +96,7 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json();
+    console.log(`[${requestId}] Replicate API response status: ${result.status}`);
     console.log(`[${requestId}] Replicate API response:`, JSON.stringify(result, null, 2));
 
     // Check if the prediction was successful
@@ -94,9 +121,14 @@ Deno.serve(async (req) => {
 
     console.log(`[${requestId}] Image generation successful`);
     console.log(`[${requestId}] Generated image URL: ${imageUrl}`);
+    console.log(`[${requestId}] Used aspect ratio: ${aspectRatio}, seed: ${seed}`);
 
     return new Response(
-      JSON.stringify({ url: imageUrl }),
+      JSON.stringify({ 
+        url: imageUrl,
+        aspect_ratio: aspectRatio,
+        seed: seed
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
