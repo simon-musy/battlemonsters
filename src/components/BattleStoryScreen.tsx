@@ -42,6 +42,7 @@ interface BattlePanel {
   isGenerating: boolean;
   error: boolean;
   prompt: string;
+  aspectRatio?: string;
 }
 
 export function BattleStoryScreen() {
@@ -107,6 +108,7 @@ export function BattleStoryScreen() {
         newPanels[panelIndex] = {
           ...newPanels[panelIndex],
           imageUrl: data.url,
+          aspectRatio: data.aspect_ratio,
           isGenerating: false,
           error: false
         };
@@ -145,6 +147,27 @@ export function BattleStoryScreen() {
 
   const goBackToBattle = () => {
     dispatch({ type: 'SELECT_POWER', payload: undefined });
+  };
+
+  // Calculate width based on aspect ratio to maintain consistent height
+  const calculateWidth = (aspectRatio: string) => {
+    if (!aspectRatio) return 'w-80'; // Default width
+    
+    const [width, height] = aspectRatio.split(':').map(Number);
+    const ratio = width / height;
+    
+    // Base height is 320px (h-80), calculate width accordingly
+    const calculatedWidth = Math.round(320 * ratio);
+    
+    // Convert to Tailwind classes or use custom width
+    if (calculatedWidth <= 256) return 'w-64';
+    if (calculatedWidth <= 320) return 'w-80';
+    if (calculatedWidth <= 384) return 'w-96';
+    if (calculatedWidth <= 448) return 'w-112';
+    if (calculatedWidth <= 512) return 'w-128';
+    
+    // For very wide images, use custom width
+    return `w-[${calculatedWidth}px]`;
   };
 
   if (!character) return null;
@@ -252,7 +275,7 @@ export function BattleStoryScreen() {
 
         {/* Story Space - Comic Strip */}
         <div className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <h3 className="text-2xl font-bold text-white text-center mb-8">BATTLE STORY</h3>
             
             {battlePanels.length === 0 ? (
@@ -260,11 +283,13 @@ export function BattleStoryScreen() {
                 <p className="text-lg">Select an attack to begin the epic battle story!</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex flex-wrap gap-4 justify-center">
                 {battlePanels.map((panel, index) => (
                   <div
                     key={panel.id}
-                    className="aspect-square bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/20 overflow-hidden"
+                    className={`h-80 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/20 overflow-hidden flex-shrink-0 ${
+                      panel.aspectRatio ? calculateWidth(panel.aspectRatio) : 'w-80'
+                    }`}
                   >
                     {panel.isGenerating ? (
                       <div className="w-full h-full flex flex-col items-center justify-center">
