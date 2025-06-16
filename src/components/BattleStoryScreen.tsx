@@ -1,9 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
 import { PlayerSidebar } from './ui/PlayerSidebar';
 import { OpponentHealthBar } from './ui/OpponentHealthBar';
 import { BattleStoryArea } from './ui/BattleStoryArea';
-import { useImageGeneration } from '../hooks/useImageGeneration';
 
 interface BattlePanel {
   id: string;
@@ -24,9 +23,6 @@ export function BattleStoryScreen() {
   const [battlePanels, setBattlePanels] = useState<BattlePanel[]>([]);
   const [battleEnded, setBattleEnded] = useState(false);
   const [playerWon, setPlayerWon] = useState(false);
-  
-  const imageGeneration = useImageGeneration();
-  const generatingPanels = useRef(new Set<number>());
 
   useEffect(() => {
     // Generate the first battle panel when component mounts
@@ -48,29 +44,16 @@ export function BattleStoryScreen() {
     }
   }, [playerHp, opponentHp, battleEnded]);
 
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      imageGeneration.cleanup();
-    };
-  }, [imageGeneration]);
-
   const generateFinalPanel = async (victory: boolean) => {
     if (!character) return;
-
-    const finalPanelIndex = battlePanels.length;
-    
-    // Prevent duplicate generation
-    if (generatingPanels.current.has(finalPanelIndex)) {
-      return;
-    }
-    generatingPanels.current.add(finalPanelIndex);
 
     // Simplified final panel prompts focusing only on the player character
     const prompt = victory 
       ? `Epic fantasy victory portrait: ${character.character_name} (${character.image_prompt}) in a triumphant victory pose. ${character.description}. The hero stands proudly with glorious golden light rays surrounding them, magical victory energy swirling around their body, heroic stance with arms raised in celebration, epic fantasy art style, dramatic cinematic lighting, champion's glow, victory celebration, triumphant expression, battlefield smoke in background, high contrast, 16:9 aspect ratio.`
       : `Dark fantasy defeat portrait: ${character.character_name} (${character.image_prompt}) in a defeated state. ${character.description}. The fallen hero kneels or lies defeated, somber lighting with shadows, exhausted and wounded, dramatic defeat composition, dark fantasy art style, melancholic atmosphere, fallen warrior, tragic scene, battlefield debris around them, high contrast, 16:9 aspect ratio.`;
 
+    const finalPanelIndex = battlePanels.length;
+    
     setBattlePanels(prev => [
       ...prev,
       {
@@ -78,29 +61,41 @@ export function BattleStoryScreen() {
         isGenerating: true,
         error: false,
         prompt,
-        aspectRatio: '16:9',
+        aspectRatio: '16:9', // Force 16:9 for final panel
         isFinalPanel: true
       }
     ]);
 
     try {
-      const result = await imageGeneration.generateImage({
-        prompt,
-        aspectRatio: '16:9',
-        cacheKey: `final-${victory ? 'victory' : 'defeat'}-${character.character_name}-${Date.now()}`,
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            prompt,
+            aspect_ratio: '16:9' // Force 16:9 aspect ratio for final image
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate final battle image');
+      }
+
+      const data = await response.json();
       
       setBattlePanels(prev => {
         const newPanels = [...prev];
-        if (newPanels[finalPanelIndex]) {
-          newPanels[finalPanelIndex] = {
-            ...newPanels[finalPanelIndex],
-            imageUrl: result.url,
-            aspectRatio: '16:9',
-            isGenerating: false,
-            error: false
-          };
-        }
+        newPanels[finalPanelIndex] = {
+          ...newPanels[finalPanelIndex],
+          imageUrl: data.url,
+          aspectRatio: '16:9', // Ensure 16:9 aspect ratio
+          isGenerating: false,
+          error: false
+        };
         return newPanels;
       });
 
@@ -108,28 +103,18 @@ export function BattleStoryScreen() {
       console.error('Failed to generate final battle image:', error);
       setBattlePanels(prev => {
         const newPanels = [...prev];
-        if (newPanels[finalPanelIndex]) {
-          newPanels[finalPanelIndex] = {
-            ...newPanels[finalPanelIndex],
-            isGenerating: false,
-            error: true
-          };
-        }
+        newPanels[finalPanelIndex] = {
+          ...newPanels[finalPanelIndex],
+          isGenerating: false,
+          error: true
+        };
         return newPanels;
       });
-    } finally {
-      generatingPanels.current.delete(finalPanelIndex);
     }
   };
 
   const generateBattlePanel = async (panelIndex: number) => {
     if (!character || !opponent) return;
-
-    // Prevent duplicate generation
-    if (generatingPanels.current.has(panelIndex)) {
-      return;
-    }
-    generatingPanels.current.add(panelIndex);
 
     const selectedPower = character.powers[state.selectedPower || 0];
     
@@ -157,22 +142,32 @@ export function BattleStoryScreen() {
     });
 
     try {
-      const result = await imageGeneration.generateImage({
-        prompt,
-        cacheKey: `battle-${panelIndex}-${character.character_name}-${selectedPower.name}-${Date.now()}`,
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate battle image');
+      }
+
+      const data = await response.json();
       
       setBattlePanels(prev => {
         const newPanels = [...prev];
-        if (newPanels[panelIndex]) {
-          newPanels[panelIndex] = {
-            ...newPanels[panelIndex],
-            imageUrl: result.url,
-            aspectRatio: result.aspectRatio,
-            isGenerating: false,
-            error: false
-          };
-        }
+        newPanels[panelIndex] = {
+          ...newPanels[panelIndex],
+          imageUrl: data.url,
+          aspectRatio: data.aspect_ratio,
+          isGenerating: false,
+          error: false
+        };
         return newPanels;
       });
 
@@ -187,17 +182,13 @@ export function BattleStoryScreen() {
       console.error('Failed to generate battle image:', error);
       setBattlePanels(prev => {
         const newPanels = [...prev];
-        if (newPanels[panelIndex]) {
-          newPanels[panelIndex] = {
-            ...newPanels[panelIndex],
-            isGenerating: false,
-            error: true
-          };
-        }
+        newPanels[panelIndex] = {
+          ...newPanels[panelIndex],
+          isGenerating: false,
+          error: true
+        };
         return newPanels;
       });
-    } finally {
-      generatingPanels.current.delete(panelIndex);
     }
   };
 
@@ -210,10 +201,7 @@ export function BattleStoryScreen() {
   };
 
   const retryPanel = (panelIndex: number) => {
-    const panel = battlePanels[panelIndex];
-    if (!panel) return;
-
-    if (panel.isFinalPanel) {
+    if (battlePanels[panelIndex].isFinalPanel) {
       generateFinalPanel(playerWon);
     } else {
       generateBattlePanel(panelIndex);

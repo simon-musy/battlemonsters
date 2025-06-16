@@ -6,13 +6,12 @@ import { PowersList } from './ui/PowersList';
 import { BattleHeader } from './ui/BattleHeader';
 import { VSSection } from './ui/VSSection';
 import { getRandomOpponent } from '../data/opponents';
-import { useImageGeneration } from '../hooks/useImageGeneration';
 
 export function BattleScreen() {
   const { state, dispatch } = useGame();
-  const { character, opponent, selectedPower } = state;
+  const { character, opponent, isGeneratingImage, imageGenerationError, selectedPower } = state;
+  const imageGenerationAttempted = useRef(false);
   const opponentSelected = useRef(false);
-  const imageGeneration = useImageGeneration();
 
   // Select random opponent when character is created
   useEffect(() => {
@@ -23,34 +22,45 @@ export function BattleScreen() {
     }
   }, [character, opponent, dispatch]);
 
-  // Generate character image with deduplication
+  // Image generation effect
   useEffect(() => {
-    if (character && !character.image_url && !imageGeneration.isGenerating && !imageGeneration.error) {
-      const generateCharacterImage = async () => {
+    if (character && !character.image_url && !isGeneratingImage && !imageGenerationError && !imageGenerationAttempted.current) {
+      imageGenerationAttempted.current = true;
+      const generateImage = async () => {
+        dispatch({ type: 'SET_GENERATING_IMAGE', payload: true });
         try {
-          const result = await imageGeneration.generateImage({
-            prompt: character.image_prompt,
-            cacheKey: `character-${character.character_name}-${character.image_prompt}`,
-          });
-          
-          if (result?.url) {
-            dispatch({ type: 'SET_CHARACTER_IMAGE', payload: result.url });
+          const response = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-image`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ prompt: character.image_prompt }),
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error('Failed to generate image');
+          }
+
+          const data = await response.json();
+          if (data.url) {
+            dispatch({ type: 'SET_CHARACTER_IMAGE', payload: data.url });
+          } else {
+            throw new Error('No image URL returned');
           }
         } catch (error) {
           console.error('Failed to generate character image:', error);
+          dispatch({ type: 'SET_IMAGE_GENERATION_ERROR', payload: true });
+        } finally {
+          dispatch({ type: 'SET_GENERATING_IMAGE', payload: false });
         }
       };
 
-      generateCharacterImage();
+      generateImage();
     }
-  }, [character, imageGeneration, dispatch]);
-
-  // Cleanup on unmount
-  useEffect(() => {
-    return () => {
-      imageGeneration.cleanup();
-    };
-  }, [imageGeneration]);
+  }, [character, isGeneratingImage, imageGenerationError, dispatch]);
 
   // If a power is selected, show the battle story screen
   if (selectedPower !== undefined) {
@@ -64,18 +74,8 @@ export function BattleScreen() {
   };
 
   const handleRetryImageGeneration = () => {
-    if (character) {
-      imageGeneration.retry({
-        prompt: character.image_prompt,
-        cacheKey: `character-${character.character_name}-${character.image_prompt}`,
-      }).then((result) => {
-        if (result?.url) {
-          dispatch({ type: 'SET_CHARACTER_IMAGE', payload: result.url });
-        }
-      }).catch((error) => {
-        console.error('Failed to retry character image generation:', error);
-      });
-    }
+    imageGenerationAttempted.current = false;
+    dispatch({ type: 'SET_IMAGE_GENERATION_ERROR', payload: false });
   };
 
   return (
@@ -92,8 +92,8 @@ export function BattleScreen() {
           <CharacterCard 
             character={character}
             isPlayer={true}
-            isGeneratingImage={imageGeneration.isGenerating}
-            imageGenerationError={imageGeneration.error}
+            isGeneratingImage={isGeneratingImage}
+            imageGenerationError={imageGenerationError}
             onRetryImageGeneration={handleRetryImageGeneration}
           />
         </div>
