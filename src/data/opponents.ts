@@ -62,7 +62,7 @@ export const CRYSTAL_GOLEM: Opponent = {
       damage_range: "15-25"
     }
   ],
-  image_url: "https://images.pexels.com/photos/8828489/pexels-photo-8828489.jpeg",
+  image_url: "https://i.ibb.co/DHczZmc0/golem.jpg",
   image_prompt: "Massive crystalline golem with translucent blue-white crystal body, glowing magical runes carved into crystal surface, towering humanoid form made of living gemstone, prismatic light refracting through crystal limbs, ancient magical construct, elemental earth magic, imposing stone guardian, fantasy creature"
 };
 
@@ -95,7 +95,7 @@ export const FLAME_PHOENIX: Opponent = {
       damage_range: "25-38"
     }
   ],
-  image_url: "https://images.pexels.com/photos/8828489/pexels-photo-8828489.jpeg",
+  image_url: "https://i.ibb.co/Mxnt4xFM/phoenix.jpg",
   image_prompt: "Magnificent phoenix with brilliant orange and red flame feathers, wings spread wide with fire trailing behind, golden beak and talons, eyes like burning embers, surrounded by swirling flames and sparks, majestic fire bird, mythical creature, elemental fire magic, rebirth symbolism"
 };
 
@@ -128,7 +128,7 @@ export const ICE_WITCH: Opponent = {
       damage_range: "20-30"
     }
   ],
-  image_url: "https://images.pexels.com/photos/8828489/pexels-photo-8828489.jpeg",
+  image_url: "https://i.ibb.co/z347mQy/witch.jpg",
   image_prompt: "Elegant ice witch with pale blue skin and white hair, wearing flowing robes made of ice crystals, staff topped with frozen gem, surrounded by swirling snow and ice magic, piercing blue eyes, frost patterns on clothing, winter sorceress, magical ice powers, frozen beauty"
 };
 
@@ -161,7 +161,7 @@ export const STORM_DRAGON: Opponent = {
       damage_range: "40-55"
     }
   ],
-  image_url: "https://images.pexels.com/photos/8828489/pexels-photo-8828489.jpeg",
+  image_url: "https://i.ibb.co/5gPPJZZP/dragon.jpg",
   image_prompt: "Massive storm dragon with blue-silver scales crackling with electricity, wings spread wide with lightning arcing between them, glowing yellow eyes, sharp claws and teeth, surrounded by storm clouds and lightning bolts, ancient dragon, elemental lightning magic, sky lord, tempest creature"
 };
 
@@ -194,7 +194,7 @@ export const VOID_ASSASSIN: Opponent = {
       damage_range: "30-45"
     }
   ],
-  image_url: "https://images.pexels.com/photos/8828489/pexels-photo-8828489.jpeg",
+  image_url: "https://i.ibb.co/FqL2zqVh/assassin.jpg",
   image_prompt: "Sleek assassin in dark leather armor with void-black cloak, twin curved daggers glowing with purple energy, face partially hidden by shadow mask, surrounded by wisps of dark smoke, agile build, stealth warrior, shadow magic, dimensional assassin, dark fantasy rogue"
 };
 
