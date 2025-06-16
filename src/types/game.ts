@@ -25,6 +25,7 @@ export interface Opponent {
   mana: number;
   powers: Power[];
   image_url: string;
+  image_prompt: string; // Added image_prompt field
 }
 
 export interface GameState {

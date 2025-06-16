@@ -33,7 +33,8 @@ const FIXED_OPPONENT: Opponent = {
       damage_range: "35-50"
     }
   ],
-  image_url: "https://i.ibb.co/HLNJNcKg/Gemini-Generated-Image-6tj37f6tj37f6tj3.jpg"
+  image_url: "https://i.ibb.co/HLNJNcKg/Gemini-Generated-Image-6tj37f6tj37f6tj3.jpg",
+  image_prompt: "Dark hooded figure wreathed in shadows and purple energy, skeletal hands with glowing claws, tattered black robes flowing in supernatural wind, glowing red eyes piercing through darkness, necromantic aura, void energy swirling around, menacing presence, dark fantasy villain, gothic horror aesthetic"
 };
 
 interface BattlePanel {
@@ -80,9 +81,15 @@ export function BattleStoryScreen() {
   const generateFinalPanel = async (victory: boolean) => {
     if (!character) return;
 
+    // Enhanced final panel prompts with detailed character aesthetics
+    const winnerAesthetics = victory ? character.image_prompt : FIXED_OPPONENT.image_prompt;
+    const loserAesthetics = victory ? FIXED_OPPONENT.image_prompt : character.image_prompt;
+    const winnerName = victory ? character.character_name : FIXED_OPPONENT.character_name;
+    const loserName = victory ? FIXED_OPPONENT.character_name : character.character_name;
+
     const prompt = victory 
-      ? `Epic fantasy victory scene: ${character.character_name} standing triumphantly over the defeated ${FIXED_OPPONENT.character_name}. Glorious victory pose, golden light rays, magical energy swirling around the victor, debris and smoke from the intense battle, dramatic lighting, cinematic composition, heroic stance, celebration of triumph, epic fantasy art style, high contrast, victory celebration, champion pose.`
-      : `Dark fantasy defeat scene: ${FIXED_OPPONENT.character_name} standing victorious over the fallen ${character.character_name}. Ominous shadows, dark energy emanating from the victor, dramatic defeat composition, somber lighting, fallen hero, epic battle aftermath, dark fantasy art style, high contrast, defeat and loss, tragic scene.`;
+      ? `Epic fantasy victory scene: ${winnerName} (${winnerAesthetics}) standing triumphantly over the defeated ${loserName} (${loserAesthetics}). The victor poses heroically with ${victory ? character.description : FIXED_OPPONENT.description}. Glorious golden light rays, magical victory energy swirling around the champion, debris and smoke from the intense battle, dramatic cinematic lighting, heroic stance, celebration of triumph, epic fantasy art style, high contrast, victory celebration, champion pose, battlefield aftermath, 16:9 aspect ratio.`
+      : `Dark fantasy defeat scene: ${winnerName} (${winnerAesthetics}) standing victorious over the fallen ${loserName} (${loserAesthetics}). The victor dominates with ${victory ? character.description : FIXED_OPPONENT.description}. Ominous shadows, dark energy emanating from the victor, dramatic defeat composition, somber lighting, fallen hero, epic battle aftermath, dark fantasy art style, high contrast, defeat and loss, tragic scene, battlefield devastation, 16:9 aspect ratio.`;
 
     const finalPanelIndex = battlePanels.length;
     
@@ -150,8 +157,12 @@ export function BattleStoryScreen() {
 
     const selectedPower = character.powers[state.selectedPower || 0];
     
-    // Create intense, action-packed battle prompts
-    const prompt = `Epic fantasy battle scene: ${character.character_name} unleashing devastating ${selectedPower.name} attack against ${FIXED_OPPONENT.character_name}. ${selectedPower.description}. Intense combat action, explosive magical effects, dramatic lighting, debris flying, energy blasts, fierce expressions, dynamic poses, cinematic battle photography, high contrast, sparks and flames, destruction and chaos, epic confrontation, dark fantasy art style.`;
+    // Enhanced battle prompts with detailed character aesthetics
+    const prompt = `Epic fantasy battle scene: ${character.character_name} (${character.image_prompt}) unleashing devastating ${selectedPower.name} attack against ${FIXED_OPPONENT.character_name} (${FIXED_OPPONENT.image_prompt}). 
+    
+    Action: ${selectedPower.description}. The attacker shows ${character.description} while the defender displays ${FIXED_OPPONENT.description}.
+    
+    Visual style: Intense combat action, explosive magical effects, dramatic lighting with sparks and energy, debris flying through the air, fierce expressions showing determination and pain, dynamic action poses mid-combat, cinematic battle photography, high contrast lighting, magical sparks and flames, destruction and chaos around them, epic confrontation, dark fantasy art style with vibrant magical effects.`;
 
     // Add new panel or update existing one
     setBattlePanels(prev => {

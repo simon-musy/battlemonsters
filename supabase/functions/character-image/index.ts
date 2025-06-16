@@ -29,7 +29,7 @@ Deno.serve(async (req) => {
     const body = await req.json();
     console.log(`[${requestId}] Request body:`, body);
 
-    const { prompt } = body;
+    const { prompt, aspect_ratio } = body;
 
     if (!prompt) {
       console.error(`[${requestId}] Missing prompt in request`);
@@ -50,18 +50,18 @@ Deno.serve(async (req) => {
       throw new Error('Replicate API token not configured');
     }
 
-    // Generate random parameters for dynamic variety
-    const aspectRatio = getRandomAspectRatio();
+    // Use provided aspect ratio or generate random one for variety
+    const finalAspectRatio = aspect_ratio || getRandomAspectRatio();
     const seed = Math.floor(Math.random() * 1000000); // Random seed for variety
     
-    console.log(`[${requestId}] Using aspect ratio: ${aspectRatio}, seed: ${seed}`);
+    console.log(`[${requestId}] Using aspect ratio: ${finalAspectRatio}, seed: ${seed}`);
     console.log(`[${requestId}] Making Replicate API call...`);
     const startTime = Date.now();
     
     const requestBody = {
       input: {
         prompt: prompt,
-        aspect_ratio: aspectRatio,
+        aspect_ratio: finalAspectRatio,
         seed: seed,
         num_outputs: 1,
         num_inference_steps: 4,
@@ -121,12 +121,12 @@ Deno.serve(async (req) => {
 
     console.log(`[${requestId}] Image generation successful`);
     console.log(`[${requestId}] Generated image URL: ${imageUrl}`);
-    console.log(`[${requestId}] Used aspect ratio: ${aspectRatio}, seed: ${seed}`);
+    console.log(`[${requestId}] Used aspect ratio: ${finalAspectRatio}, seed: ${seed}`);
 
     return new Response(
       JSON.stringify({ 
         url: imageUrl,
-        aspect_ratio: aspectRatio,
+        aspect_ratio: finalAspectRatio,
         seed: seed
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
