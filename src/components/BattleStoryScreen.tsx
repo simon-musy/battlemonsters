@@ -383,26 +383,76 @@ export function BattleStoryScreen() {
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Top Bar - Opponent Info */}
+        {/* Top Bar - Stylized Opponent Info */}
         <div className="bg-gray-900/80 backdrop-blur-sm border-b border-purple-500/20 p-6">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-4">
-              <div className="text-xl font-semibold text-red-200">{FIXED_OPPONENT.character_name}</div>
-            </div>
-            
-            {/* Opponent HP Bar */}
-            <div className="max-w-md mx-auto">
-              <div className="flex justify-between text-sm text-red-300 mb-2">
-                <span>HP</span>
-                <span>{opponentHp}/{FIXED_OPPONENT.hp}</span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-4">
-                <div 
-                  className={`h-4 rounded-full transition-all duration-500 ${
-                    opponentHp <= 0 ? 'bg-gradient-to-r from-gray-500 to-gray-400' : 'bg-gradient-to-r from-red-600 to-red-500'
-                  }`}
-                  style={{ width: `${opponentHpPercentage}%` }}
-                />
+            {/* Stylized Opponent Frame */}
+            <div className="relative">
+              {/* Decorative Frame */}
+              <div className="bg-gradient-to-r from-red-900/80 via-red-800/80 to-red-900/80 rounded-lg border-2 border-red-500/60 shadow-lg shadow-red-500/20 p-4">
+                {/* Corner decorations */}
+                <div className="absolute -top-1 -left-1 w-4 h-4 border-l-2 border-t-2 border-yellow-400/80 rounded-tl-lg"></div>
+                <div className="absolute -top-1 -right-1 w-4 h-4 border-r-2 border-t-2 border-yellow-400/80 rounded-tr-lg"></div>
+                <div className="absolute -bottom-1 -left-1 w-4 h-4 border-l-2 border-b-2 border-yellow-400/80 rounded-bl-lg"></div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 border-r-2 border-b-2 border-yellow-400/80 rounded-br-lg"></div>
+                
+                {/* Enemy indicator */}
+                <div className="absolute -top-3 left-4 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded border border-red-400">
+                  ENEMY
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  {/* Character Name */}
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-white mb-1 drop-shadow-lg">
+                      {FIXED_OPPONENT.character_name}
+                    </h2>
+                  </div>
+                  
+                  {/* Character Portrait */}
+                  <div className="w-16 h-16 rounded-lg overflow-hidden border-2 border-yellow-400/60 bg-gray-800/50 ml-4">
+                    {FIXED_OPPONENT.image_url ? (
+                      <img
+                        src={FIXED_OPPONENT.image_url}
+                        alt={FIXED_OPPONENT.character_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Skull className="w-8 h-8 text-red-400" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* HP Bar */}
+                <div className="mt-3">
+                  <div className="flex justify-between text-sm text-red-100 mb-2">
+                    <span className="font-semibold">HP</span>
+                    <span className="font-bold">{opponentHp}/{FIXED_OPPONENT.hp}</span>
+                  </div>
+                  <div className="relative">
+                    {/* HP Bar Background */}
+                    <div className="w-full bg-gray-800/80 rounded-full h-5 border border-gray-600/50">
+                      {/* HP Bar Fill */}
+                      <div 
+                        className={`h-full rounded-full transition-all duration-500 relative overflow-hidden ${
+                          opponentHp <= 0 
+                            ? 'bg-gradient-to-r from-gray-600 to-gray-500' 
+                            : 'bg-gradient-to-r from-red-500 via-red-400 to-red-300'
+                        }`}
+                        style={{ width: `${opponentHpPercentage}%` }}
+                      >
+                        {/* Animated shine effect */}
+                        {opponentHp > 0 && (
+                          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
+                        )}
+                      </div>
+                    </div>
+                    {/* HP Bar Border Highlight */}
+                    <div className="absolute inset-0 rounded-full border border-red-400/40 pointer-events-none"></div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
