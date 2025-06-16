@@ -93,6 +93,7 @@ export function BattleStoryScreen() {
         isGenerating: true,
         error: false,
         prompt,
+        aspectRatio: '16:9', // Force 16:9 for final panel
         isFinalPanel: true
       }
     ]);
@@ -105,7 +106,10 @@ export function BattleStoryScreen() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ prompt }),
+          body: JSON.stringify({ 
+            prompt,
+            aspect_ratio: '16:9' // Force 16:9 aspect ratio for final image
+          }),
         }
       );
 
@@ -120,7 +124,7 @@ export function BattleStoryScreen() {
         newPanels[finalPanelIndex] = {
           ...newPanels[finalPanelIndex],
           imageUrl: data.url,
-          aspectRatio: data.aspect_ratio,
+          aspectRatio: '16:9', // Ensure 16:9 aspect ratio
           isGenerating: false,
           error: false
         };
@@ -444,33 +448,10 @@ export function BattleStoryScreen() {
                         />
                         {/* Victory/Defeat Overlay for Final Panel */}
                         {panel.isFinalPanel && (
-                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
-                            <div className={`text-center p-6 rounded-xl backdrop-blur-sm ${
-                              playerWon 
-                                ? 'bg-green-900/80 border-2 border-green-400' 
-                                : 'bg-red-900/80 border-2 border-red-400'
-                            }`}>
-                              <div className="flex items-center justify-center mb-4">
-                                {playerWon ? (
-                                  <Trophy className="w-16 h-16 text-yellow-400" />
-                                ) : (
-                                  <Skull className="w-16 h-16 text-red-400" />
-                                )}
-                              </div>
-                              <h2 className={`text-4xl font-bold mb-2 ${
-                                playerWon ? 'text-green-200' : 'text-red-200'
-                              }`}>
-                                {playerWon ? 'YOU WON!' : 'YOU LOST!'}
-                              </h2>
-                              <p className={`text-lg ${
-                                playerWon ? 'text-green-300' : 'text-red-300'
-                              }`}>
-                                {playerWon 
-                                  ? 'Victory is yours, champion!' 
-                                  : 'Better luck next time, warrior!'
-                                }
-                              </p>
-                            </div>
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <h2 className="text-6xl font-black text-white uppercase tracking-wider drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
+                              {playerWon ? 'YOU WON!' : 'YOU LOST!'}
+                            </h2>
                           </div>
                         )}
                       </>
