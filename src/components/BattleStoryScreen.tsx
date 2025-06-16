@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
-import { Loader2, AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, RefreshCw, ArrowLeft, Trophy, Skull } from 'lucide-react';
 import type { Opponent } from '../types/game';
 
 // Fixed opponent for now
@@ -43,6 +43,7 @@ interface BattlePanel {
   error: boolean;
   prompt: string;
   aspectRatio?: string;
+  isFinalPanel?: boolean;
 }
 
 export function BattleStoryScreen() {
@@ -53,6 +54,8 @@ export function BattleStoryScreen() {
   const [opponentHp, setOpponentHp] = useState(FIXED_OPPONENT.hp);
   const [battlePanels, setBattlePanels] = useState<BattlePanel[]>([]);
   const [isGeneratingStory, setIsGeneratingStory] = useState(false);
+  const [battleEnded, setBattleEnded] = useState(false);
+  const [playerWon, setPlayerWon] = useState(false);
 
   useEffect(() => {
     // Generate the first battle panel when component mounts
@@ -60,6 +63,83 @@ export function BattleStoryScreen() {
       generateBattlePanel(0);
     }
   }, []);
+
+  // Check for battle end conditions
+  useEffect(() => {
+    if (playerHp <= 0 && !battleEnded) {
+      setBattleEnded(true);
+      setPlayerWon(false);
+      generateFinalPanel(false);
+    } else if (opponentHp <= 0 && !battleEnded) {
+      setBattleEnded(true);
+      setPlayerWon(true);
+      generateFinalPanel(true);
+    }
+  }, [playerHp, opponentHp, battleEnded]);
+
+  const generateFinalPanel = async (victory: boolean) => {
+    if (!character) return;
+
+    const prompt = victory 
+      ? `Epic fantasy victory scene: ${character.character_name} standing triumphantly over the defeated ${FIXED_OPPONENT.character_name}. Glorious victory pose, golden light rays, magical energy swirling around the victor, debris and smoke from the intense battle, dramatic lighting, cinematic composition, heroic stance, celebration of triumph, epic fantasy art style, high contrast, victory celebration, champion pose.`
+      : `Dark fantasy defeat scene: ${FIXED_OPPONENT.character_name} standing victorious over the fallen ${character.character_name}. Ominous shadows, dark energy emanating from the victor, dramatic defeat composition, somber lighting, fallen hero, epic battle aftermath, dark fantasy art style, high contrast, defeat and loss, tragic scene.`;
+
+    const finalPanelIndex = battlePanels.length;
+    
+    setBattlePanels(prev => [
+      ...prev,
+      {
+        id: `final-panel`,
+        isGenerating: true,
+        error: false,
+        prompt,
+        isFinalPanel: true
+      }
+    ]);
+
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/character-image`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ prompt }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate final battle image');
+      }
+
+      const data = await response.json();
+      
+      setBattlePanels(prev => {
+        const newPanels = [...prev];
+        newPanels[finalPanelIndex] = {
+          ...newPanels[finalPanelIndex],
+          imageUrl: data.url,
+          aspectRatio: data.aspect_ratio,
+          isGenerating: false,
+          error: false
+        };
+        return newPanels;
+      });
+
+    } catch (error) {
+      console.error('Failed to generate final battle image:', error);
+      setBattlePanels(prev => {
+        const newPanels = [...prev];
+        newPanels[finalPanelIndex] = {
+          ...newPanels[finalPanelIndex],
+          isGenerating: false,
+          error: true
+        };
+        return newPanels;
+      });
+    }
+  };
 
   const generateBattlePanel = async (panelIndex: number) => {
     if (!character) return;
@@ -116,8 +196,11 @@ export function BattleStoryScreen() {
       });
 
       // Simulate battle damage
-      const damage = Math.floor(Math.random() * 30) + 15;
-      setOpponentHp(prev => Math.max(0, prev - damage));
+      const playerDamage = Math.floor(Math.random() * 25) + 10; // Player takes 10-35 damage
+      const opponentDamage = Math.floor(Math.random() * 30) + 15; // Opponent takes 15-45 damage
+      
+      setOpponentHp(prev => Math.max(0, prev - opponentDamage));
+      setPlayerHp(prev => Math.max(0, prev - playerDamage));
 
     } catch (error) {
       console.error('Failed to generate battle image:', error);
@@ -134,7 +217,7 @@ export function BattleStoryScreen() {
   };
 
   const handleAttack = async (powerIndex: number) => {
-    if (!character) return;
+    if (!character || battleEnded) return;
     
     dispatch({ type: 'SELECT_POWER', payload: powerIndex });
     const nextPanelIndex = battlePanels.length;
@@ -142,7 +225,11 @@ export function BattleStoryScreen() {
   };
 
   const retryPanel = (panelIndex: number) => {
-    generateBattlePanel(panelIndex);
+    if (battlePanels[panelIndex].isFinalPanel) {
+      generateFinalPanel(playerWon);
+    } else {
+      generateBattlePanel(panelIndex);
+    }
   };
 
   const goBackToBattle = () => {
@@ -199,7 +286,9 @@ export function BattleStoryScreen() {
             </div>
             <div className="w-full bg-gray-700 rounded-full h-3">
               <div 
-                className="bg-gradient-to-r from-red-500 to-red-400 h-3 rounded-full transition-all duration-500"
+                className={`h-3 rounded-full transition-all duration-500 ${
+                  playerHp <= 0 ? 'bg-gradient-to-r from-gray-500 to-gray-400' : 'bg-gradient-to-r from-red-500 to-red-400'
+                }`}
                 style={{ width: `${playerHpPercentage}%` }}
               />
             </div>
@@ -223,6 +312,27 @@ export function BattleStoryScreen() {
           </div>
         </div>
 
+        {/* Battle Status */}
+        {battleEnded && (
+          <div className={`mb-6 p-4 rounded-lg text-center ${
+            playerWon ? 'bg-green-900/50 border border-green-500/50' : 'bg-red-900/50 border border-red-500/50'
+          }`}>
+            <div className="flex items-center justify-center mb-2">
+              {playerWon ? (
+                <Trophy className="w-8 h-8 text-yellow-400" />
+              ) : (
+                <Skull className="w-8 h-8 text-red-400" />
+              )}
+            </div>
+            <h3 className={`text-xl font-bold ${playerWon ? 'text-green-200' : 'text-red-200'}`}>
+              {playerWon ? 'VICTORY!' : 'DEFEAT!'}
+            </h3>
+            <p className={`text-sm ${playerWon ? 'text-green-300' : 'text-red-300'}`}>
+              {playerWon ? 'You have triumphed!' : 'You have been defeated!'}
+            </p>
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex-1">
           <h3 className="text-lg font-semibold text-purple-200 mb-4">ACTIONS</h3>
@@ -231,14 +341,25 @@ export function BattleStoryScreen() {
               <button
                 key={power.name}
                 onClick={() => handleAttack(index)}
-                className="w-full p-3 bg-gray-800/50 hover:bg-purple-900/30 border border-purple-500/20 hover:border-purple-500/40 rounded-lg text-left transition-all duration-200"
+                disabled={battleEnded}
+                className={`w-full p-3 border rounded-lg text-left transition-all duration-200 ${
+                  battleEnded 
+                    ? 'bg-gray-800/30 border-gray-600/20 text-gray-500 cursor-not-allowed' 
+                    : 'bg-gray-800/50 hover:bg-purple-900/30 border-purple-500/20 hover:border-purple-500/40'
+                }`}
               >
                 <div className="flex justify-between items-start mb-1">
-                  <h4 className="font-semibold text-purple-200 text-sm">{power.name}</h4>
-                  <span className="text-xs text-yellow-400">{power.energy_cost}</span>
+                  <h4 className={`font-semibold text-sm ${battleEnded ? 'text-gray-500' : 'text-purple-200'}`}>
+                    {power.name}
+                  </h4>
+                  <span className={`text-xs ${battleEnded ? 'text-gray-600' : 'text-yellow-400'}`}>
+                    {power.energy_cost}
+                  </span>
                 </div>
-                <p className="text-xs text-purple-300 mb-1">{power.description}</p>
-                <div className="text-xs text-purple-400">
+                <p className={`text-xs mb-1 ${battleEnded ? 'text-gray-600' : 'text-purple-300'}`}>
+                  {power.description}
+                </p>
+                <div className={`text-xs ${battleEnded ? 'text-gray-600' : 'text-purple-400'}`}>
                   Damage: {power.damage_range}
                 </div>
               </button>
@@ -265,7 +386,9 @@ export function BattleStoryScreen() {
               </div>
               <div className="w-full bg-gray-700 rounded-full h-4">
                 <div 
-                  className="bg-gradient-to-r from-red-600 to-red-500 h-4 rounded-full transition-all duration-500"
+                  className={`h-4 rounded-full transition-all duration-500 ${
+                    opponentHp <= 0 ? 'bg-gradient-to-r from-gray-500 to-gray-400' : 'bg-gradient-to-r from-red-600 to-red-500'
+                  }`}
                   style={{ width: `${opponentHpPercentage}%` }}
                 />
               </div>
@@ -287,7 +410,7 @@ export function BattleStoryScreen() {
                 {battlePanels.map((panel, index) => (
                   <div
                     key={panel.id}
-                    className={`h-80 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/20 overflow-hidden flex-shrink-0 ${
+                    className={`h-80 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/20 overflow-hidden flex-shrink-0 relative ${
                       panel.aspectRatio ? calculateWidth(panel.aspectRatio) : 'w-80'
                     }`}
                   >
@@ -295,7 +418,7 @@ export function BattleStoryScreen() {
                       <div className="w-full h-full flex flex-col items-center justify-center">
                         <Loader2 className="w-12 h-12 text-purple-400 animate-spin mb-4" />
                         <p className="text-purple-300 text-center px-4">
-                          Generating epic battle scene...
+                          {panel.isFinalPanel ? 'Generating final scene...' : 'Generating epic battle scene...'}
                         </p>
                       </div>
                     ) : panel.error ? (
@@ -313,11 +436,44 @@ export function BattleStoryScreen() {
                         </button>
                       </div>
                     ) : panel.imageUrl ? (
-                      <img
-                        src={panel.imageUrl}
-                        alt={`Epic battle scene ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <>
+                        <img
+                          src={panel.imageUrl}
+                          alt={`Epic battle scene ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Victory/Defeat Overlay for Final Panel */}
+                        {panel.isFinalPanel && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                            <div className={`text-center p-6 rounded-xl backdrop-blur-sm ${
+                              playerWon 
+                                ? 'bg-green-900/80 border-2 border-green-400' 
+                                : 'bg-red-900/80 border-2 border-red-400'
+                            }`}>
+                              <div className="flex items-center justify-center mb-4">
+                                {playerWon ? (
+                                  <Trophy className="w-16 h-16 text-yellow-400" />
+                                ) : (
+                                  <Skull className="w-16 h-16 text-red-400" />
+                                )}
+                              </div>
+                              <h2 className={`text-4xl font-bold mb-2 ${
+                                playerWon ? 'text-green-200' : 'text-red-200'
+                              }`}>
+                                {playerWon ? 'YOU WON!' : 'YOU LOST!'}
+                              </h2>
+                              <p className={`text-lg ${
+                                playerWon ? 'text-green-300' : 'text-red-300'
+                              }`}>
+                                {playerWon 
+                                  ? 'Victory is yours, champion!' 
+                                  : 'Better luck next time, warrior!'
+                                }
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </>
                     ) : null}
                   </div>
                 ))}
