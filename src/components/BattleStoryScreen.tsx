@@ -3,7 +3,6 @@ import { useGame } from '../context/GameContext';
 import { PlayerSidebar } from './ui/PlayerSidebar';
 import { OpponentHealthBar } from './ui/OpponentHealthBar';
 import { BattleStoryArea } from './ui/BattleStoryArea';
-import { FIXED_OPPONENT } from '../data/opponents';
 
 interface BattlePanel {
   id: string;
@@ -17,17 +16,17 @@ interface BattlePanel {
 
 export function BattleStoryScreen() {
   const { state, dispatch } = useGame();
-  const { character } = state;
+  const { character, opponent } = state;
   
   const [playerHp, setPlayerHp] = useState(character?.hp || 100);
-  const [opponentHp, setOpponentHp] = useState(FIXED_OPPONENT.hp);
+  const [opponentHp, setOpponentHp] = useState(opponent?.hp || 100);
   const [battlePanels, setBattlePanels] = useState<BattlePanel[]>([]);
   const [battleEnded, setBattleEnded] = useState(false);
   const [playerWon, setPlayerWon] = useState(false);
 
   useEffect(() => {
     // Generate the first battle panel when component mounts
-    if (state.selectedPower !== undefined && character) {
+    if (state.selectedPower !== undefined && character && opponent) {
       generateBattlePanel(0);
     }
   }, []);
@@ -115,14 +114,14 @@ export function BattleStoryScreen() {
   };
 
   const generateBattlePanel = async (panelIndex: number) => {
-    if (!character) return;
+    if (!character || !opponent) return;
 
     const selectedPower = character.powers[state.selectedPower || 0];
     
     // Enhanced battle prompts with detailed character aesthetics
-    const prompt = `Epic fantasy battle scene: ${character.character_name} (${character.image_prompt}) unleashing devastating ${selectedPower.name} attack against ${FIXED_OPPONENT.character_name} (${FIXED_OPPONENT.image_prompt}). 
+    const prompt = `Epic fantasy battle scene: ${character.character_name} (${character.image_prompt}) unleashing devastating ${selectedPower.name} attack against ${opponent.character_name} (${opponent.image_prompt}). 
     
-    Action: ${selectedPower.description}. The attacker shows ${character.description} while the defender displays ${FIXED_OPPONENT.description}.
+    Action: ${selectedPower.description}. The attacker shows ${character.description} while the defender displays ${opponent.description}.
     
     Visual style: Intense combat action, explosive magical effects, dramatic lighting with sparks and energy, debris flying through the air, fierce expressions showing determination and pain, dynamic action poses mid-combat, cinematic battle photography, high contrast lighting, magical sparks and flames, destruction and chaos around them, epic confrontation, dark fantasy art style with vibrant magical effects.`;
 
@@ -213,7 +212,7 @@ export function BattleStoryScreen() {
     dispatch({ type: 'SELECT_POWER', payload: undefined });
   };
 
-  if (!character) return null;
+  if (!character || !opponent) return null;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex">
@@ -230,7 +229,7 @@ export function BattleStoryScreen() {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
         {/* Top Bar - Opponent Info */}
-        <OpponentHealthBar opponent={FIXED_OPPONENT} currentHp={opponentHp} />
+        <OpponentHealthBar opponent={opponent} currentHp={opponentHp} />
 
         {/* Story Space - Comic Strip */}
         <BattleStoryArea
