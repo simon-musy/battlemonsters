@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../context/GameContext';
-import { Loader2, AlertCircle, RefreshCw, ArrowLeft, Trophy, Skull } from 'lucide-react';
+import { PlayerSidebar } from './ui/PlayerSidebar';
+import { OpponentHealthBar } from './ui/OpponentHealthBar';
+import { BattleStoryArea } from './ui/BattleStoryArea';
 import { FIXED_OPPONENT } from '../data/opponents';
 
 interface BattlePanel {
@@ -20,7 +22,6 @@ export function BattleStoryScreen() {
   const [playerHp, setPlayerHp] = useState(character?.hp || 100);
   const [opponentHp, setOpponentHp] = useState(FIXED_OPPONENT.hp);
   const [battlePanels, setBattlePanels] = useState<BattlePanel[]>([]);
-  const [isGeneratingStory, setIsGeneratingStory] = useState(false);
   const [battleEnded, setBattleEnded] = useState(false);
   const [playerWon, setPlayerWon] = useState(false);
 
@@ -217,259 +218,31 @@ export function BattleStoryScreen() {
     dispatch({ type: 'SELECT_POWER', payload: undefined });
   };
 
-  // Calculate width based on aspect ratio to maintain consistent height
-  const calculateWidth = (aspectRatio: string) => {
-    if (!aspectRatio) return 'w-80'; // Default width
-    
-    const [width, height] = aspectRatio.split(':').map(Number);
-    const ratio = width / height;
-    
-    // Base height is 320px (h-80), calculate width accordingly
-    const calculatedWidth = Math.round(320 * ratio);
-    
-    // Convert to Tailwind classes or use custom width
-    if (calculatedWidth <= 256) return 'w-64';
-    if (calculatedWidth <= 320) return 'w-80';
-    if (calculatedWidth <= 384) return 'w-96';
-    if (calculatedWidth <= 448) return 'w-112';
-    if (calculatedWidth <= 512) return 'w-128';
-    
-    // For very wide images, use custom width
-    return `w-[${calculatedWidth}px]`;
-  };
-
   if (!character) return null;
-
-  const playerHpPercentage = (playerHp / character.hp) * 100;
-  const opponentHpPercentage = (opponentHp / FIXED_OPPONENT.hp) * 100;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex">
       {/* Left Sidebar - Player Info */}
-      <div className="w-80 bg-gray-900/80 backdrop-blur-sm border-r border-purple-500/20 p-6 flex flex-col">
-        <button
-          onClick={goBackToBattle}
-          className="flex items-center gap-2 text-purple-300 hover:text-purple-200 mb-6 transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Battle Setup
-        </button>
-
-        <div className="text-center mb-6">
-          <div className="text-lg font-semibold text-purple-200 mb-2">{character.character_name}</div>
-          
-          {/* Player HP Bar */}
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-purple-300 mb-1">
-              <span>HP</span>
-              <span>{playerHp}/{character.hp}</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-3">
-              <div 
-                className={`h-3 rounded-full transition-all duration-500 ${
-                  playerHp <= 0 ? 'bg-gradient-to-r from-gray-500 to-gray-400' : 'bg-gradient-to-r from-red-500 to-red-400'
-                }`}
-                style={{ width: `${playerHpPercentage}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Character Image */}
-          <div className="w-32 h-32 mx-auto mb-4 rounded-lg overflow-hidden bg-gray-800/50">
-            {character.image_url ? (
-              <img
-                src={character.image_url}
-                alt={character.character_name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <div className="w-12 h-12 rounded-full bg-purple-600/20 flex items-center justify-center">
-                  <span className="text-2xl">⚔️</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Battle Status */}
-        {battleEnded && (
-          <div className={`mb-6 p-4 rounded-lg text-center ${
-            playerWon ? 'bg-green-900/50 border border-green-500/50' : 'bg-red-900/50 border border-red-500/50'
-          }`}>
-            <div className="flex items-center justify-center mb-2">
-              {playerWon ? (
-                <Trophy className="w-8 h-8 text-yellow-400" />
-              ) : (
-                <Skull className="w-8 h-8 text-red-400" />
-              )}
-            </div>
-            <h3 className={`text-xl font-bold ${playerWon ? 'text-green-200' : 'text-red-200'}`}>
-              {playerWon ? 'VICTORY!' : 'DEFEAT!'}
-            </h3>
-            <p className={`text-sm ${playerWon ? 'text-green-300' : 'text-red-300'}`}>
-              {playerWon ? 'You have triumphed!' : 'You have been defeated!'}
-            </p>
-          </div>
-        )}
-
-        {/* Actions */}
-        <div className="flex-1">
-          <div className="space-y-3">
-            {character.powers.map((power, index) => (
-              <button
-                key={power.name}
-                onClick={() => handleAttack(index)}
-                disabled={battleEnded}
-                className={`w-full p-3 border rounded-lg text-left transition-all duration-200 ${
-                  battleEnded 
-                    ? 'bg-gray-800/30 border-gray-600/20 text-gray-500 cursor-not-allowed' 
-                    : 'bg-gray-800/50 hover:bg-purple-900/30 border-purple-500/20 hover:border-purple-500/40'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <h4 className={`font-semibold text-sm ${battleEnded ? 'text-gray-500' : 'text-purple-200'}`}>
-                    {power.name}
-                  </h4>
-                  <span className={`text-xs ${battleEnded ? 'text-gray-600' : 'text-yellow-400'}`}>
-                    {power.energy_cost}
-                  </span>
-                </div>
-                <p className={`text-xs mb-1 ${battleEnded ? 'text-gray-600' : 'text-purple-300'}`}>
-                  {power.description}
-                </p>
-                <div className={`text-xs ${battleEnded ? 'text-gray-600' : 'text-purple-400'}`}>
-                  Damage: {power.damage_range}
-                </div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PlayerSidebar
+        character={character}
+        playerHp={playerHp}
+        battleEnded={battleEnded}
+        playerWon={playerWon}
+        onGoBack={goBackToBattle}
+        onAttack={handleAttack}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col">
-        {/* Streamlined Top Bar - Opponent Info */}
-        <div className="bg-gray-900/80 backdrop-blur-sm border-b border-purple-500/20 p-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center gap-4">
-              {/* Enemy Badge */}
-              <div className="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded border border-red-400">
-                ENEMY
-              </div>
-              
-              {/* HP Bar - Takes most of the space */}
-              <div className="flex-1">
-                <div className="flex justify-between text-sm text-red-100 mb-1">
-                  <span className="font-semibold">HP</span>
-                  <span className="font-bold">{opponentHp}/{FIXED_OPPONENT.hp}</span>
-                </div>
-                <div className="relative">
-                  {/* HP Bar Background */}
-                  <div className="w-full bg-gray-800/80 rounded-full h-4 border border-gray-600/50">
-                    {/* HP Bar Fill */}
-                    <div 
-                      className={`h-full rounded-full transition-all duration-500 relative overflow-hidden ${
-                        opponentHp <= 0 
-                          ? 'bg-gradient-to-r from-gray-600 to-gray-500' 
-                          : 'bg-gradient-to-r from-red-500 via-red-400 to-red-300'
-                      }`}
-                      style={{ width: `${opponentHpPercentage}%` }}
-                    >
-                      {/* Animated shine effect */}
-                      {opponentHp > 0 && (
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse"></div>
-                      )}
-                    </div>
-                  </div>
-                  {/* HP Bar Border Highlight */}
-                  <div className="absolute inset-0 rounded-full border border-red-400/40 pointer-events-none"></div>
-                </div>
-              </div>
-              
-              {/* Character Name */}
-              <div className="text-xl font-bold text-white drop-shadow-lg">
-                {FIXED_OPPONENT.character_name}
-              </div>
-              
-              {/* Character Portrait */}
-              <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-yellow-400/60 bg-gray-800/50">
-                {FIXED_OPPONENT.image_url ? (
-                  <img
-                    src={FIXED_OPPONENT.image_url}
-                    alt={FIXED_OPPONENT.character_name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Skull className="w-6 h-6 text-red-400" />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Top Bar - Opponent Info */}
+        <OpponentHealthBar opponent={FIXED_OPPONENT} currentHp={opponentHp} />
 
         {/* Story Space - Comic Strip */}
-        <div className="flex-1 p-6 overflow-y-auto">
-          <div className="max-w-6xl mx-auto">
-            {battlePanels.length === 0 ? (
-              <div className="text-center text-purple-300 py-12">
-                <p className="text-lg">Select an attack to begin the epic battle story!</p>
-              </div>
-            ) : (
-              <div className="flex flex-wrap gap-4 justify-center">
-                {battlePanels.map((panel, index) => (
-                  <div
-                    key={panel.id}
-                    className={`h-80 bg-gray-900/50 backdrop-blur-sm rounded-xl border border-purple-500/20 overflow-hidden flex-shrink-0 relative ${
-                      panel.aspectRatio ? calculateWidth(panel.aspectRatio) : 'w-80'
-                    }`}
-                  >
-                    {panel.isGenerating ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center">
-                        <Loader2 className="w-12 h-12 text-purple-400 animate-spin mb-4" />
-                        <p className="text-purple-300 text-center px-4">
-                          {panel.isFinalPanel ? 'Generating final scene...' : 'Generating epic battle scene...'}
-                        </p>
-                      </div>
-                    ) : panel.error ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center p-6">
-                        <AlertCircle className="w-12 h-12 text-red-400 mb-4" />
-                        <p className="text-red-300 text-center mb-4">
-                          Failed to generate battle scene
-                        </p>
-                        <button
-                          onClick={() => retryPanel(index)}
-                          className="flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg transition-colors"
-                        >
-                          <RefreshCw className="w-4 h-4" />
-                          Retry
-                        </button>
-                      </div>
-                    ) : panel.imageUrl ? (
-                      <>
-                        <img
-                          src={panel.imageUrl}
-                          alt={`Epic battle scene ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        {/* Victory/Defeat Overlay for Final Panel */}
-                        {panel.isFinalPanel && (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <h2 className="text-6xl font-black text-white uppercase tracking-wider drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]">
-                              {playerWon ? 'YOU WON!' : 'YOU LOST!'}
-                            </h2>
-                          </div>
-                        )}
-                      </>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <BattleStoryArea
+          battlePanels={battlePanels}
+          playerWon={playerWon}
+          onRetryPanel={retryPanel}
+        />
       </div>
     </div>
   );
