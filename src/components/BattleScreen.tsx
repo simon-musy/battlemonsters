@@ -37,10 +37,7 @@ export function BattleScreen() {
             dispatch({ type: 'SET_CHARACTER_IMAGE', payload: result.url });
           }
         } catch (error) {
-          // Don't log AbortError as it's expected when component unmounts
-          if (error instanceof Error && error.name !== 'AbortError') {
-            console.error('Failed to generate character image:', error);
-          }
+          console.error('Failed to generate character image:', error);
         }
       };
 
@@ -76,10 +73,7 @@ export function BattleScreen() {
           dispatch({ type: 'SET_CHARACTER_IMAGE', payload: result.url });
         }
       }).catch((error) => {
-        // Don't log AbortError as it's expected when component unmounts
-        if (error instanceof Error && error.name !== 'AbortError') {
-          console.error('Failed to retry character image generation:', error);
-        }
+        console.error('Failed to retry character image generation:', error);
       });
     }
   };
