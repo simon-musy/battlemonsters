@@ -48,15 +48,10 @@ export function BattleStoryScreen() {
   const generateFinalPanel = async (victory: boolean) => {
     if (!character) return;
 
-    // Enhanced final panel prompts with detailed character aesthetics
-    const winnerAesthetics = victory ? character.image_prompt : FIXED_OPPONENT.image_prompt;
-    const loserAesthetics = victory ? FIXED_OPPONENT.image_prompt : character.image_prompt;
-    const winnerName = victory ? character.character_name : FIXED_OPPONENT.character_name;
-    const loserName = victory ? FIXED_OPPONENT.character_name : character.character_name;
-
+    // Simplified final panel prompts focusing only on the player character
     const prompt = victory 
-      ? `Epic fantasy victory scene: ${winnerName} (${winnerAesthetics}) standing triumphantly over the defeated ${loserName} (${loserAesthetics}). The victor poses heroically with ${victory ? character.description : FIXED_OPPONENT.description}. Glorious golden light rays, magical victory energy swirling around the champion, debris and smoke from the intense battle, dramatic cinematic lighting, heroic stance, celebration of triumph, epic fantasy art style, high contrast, victory celebration, champion pose, battlefield aftermath, 16:9 aspect ratio.`
-      : `Dark fantasy defeat scene: ${winnerName} (${winnerAesthetics}) standing victorious over the fallen ${loserName} (${loserAesthetics}). The victor dominates with ${victory ? character.description : FIXED_OPPONENT.description}. Ominous shadows, dark energy emanating from the victor, dramatic defeat composition, somber lighting, fallen hero, epic battle aftermath, dark fantasy art style, high contrast, defeat and loss, tragic scene, battlefield devastation, 16:9 aspect ratio.`;
+      ? `Epic fantasy victory portrait: ${character.character_name} (${character.image_prompt}) in a triumphant victory pose. ${character.description}. The hero stands proudly with glorious golden light rays surrounding them, magical victory energy swirling around their body, heroic stance with arms raised in celebration, epic fantasy art style, dramatic cinematic lighting, champion's glow, victory celebration, triumphant expression, battlefield smoke in background, high contrast, 16:9 aspect ratio.`
+      : `Dark fantasy defeat portrait: ${character.character_name} (${character.image_prompt}) in a defeated state. ${character.description}. The fallen hero kneels or lies defeated, somber lighting with shadows, exhausted and wounded, dramatic defeat composition, dark fantasy art style, melancholic atmosphere, fallen warrior, tragic scene, battlefield debris around them, high contrast, 16:9 aspect ratio.`;
 
     const finalPanelIndex = battlePanels.length;
     
