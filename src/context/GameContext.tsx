@@ -1,8 +1,9 @@
 import React, { createContext, useContext, useReducer } from 'react';
-import type { GameState, GameAction, Character } from '../types/game';
+import type { GameState, GameAction, Character, Opponent } from '../types/game';
 
 const initialState: GameState = {
   character: null,
+  opponent: null,
   isLoading: false,
   error: null,
   isGeneratingImage: false,
@@ -18,6 +19,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         isLoading: false,
         imageGenerationError: false // Reset image error when new character is set
       };
+    case 'SET_OPPONENT':
+      return { ...state, opponent: action.payload };
     case 'SET_LOADING':
       return { ...state, isLoading: action.payload };
     case 'SET_ERROR':

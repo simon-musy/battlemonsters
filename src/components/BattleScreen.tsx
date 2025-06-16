@@ -5,12 +5,22 @@ import { CharacterCard } from './ui/CharacterCard';
 import { PowersList } from './ui/PowersList';
 import { BattleHeader } from './ui/BattleHeader';
 import { VSSection } from './ui/VSSection';
-import { FIXED_OPPONENT } from '../data/opponents';
+import { getRandomOpponent } from '../data/opponents';
 
 export function BattleScreen() {
   const { state, dispatch } = useGame();
-  const { character, isGeneratingImage, imageGenerationError, selectedPower } = state;
+  const { character, opponent, isGeneratingImage, imageGenerationError, selectedPower } = state;
   const imageGenerationAttempted = useRef(false);
+  const opponentSelected = useRef(false);
+
+  // Select random opponent when character is created
+  useEffect(() => {
+    if (character && !opponent && !opponentSelected.current) {
+      opponentSelected.current = true;
+      const randomOpponent = getRandomOpponent();
+      dispatch({ type: 'SET_OPPONENT', payload: randomOpponent });
+    }
+  }, [character, opponent, dispatch]);
 
   // Image generation effect
   useEffect(() => {
@@ -57,7 +67,7 @@ export function BattleScreen() {
     return <BattleStoryScreen />;
   }
 
-  if (!character) return null;
+  if (!character || !opponent) return null;
 
   const handleAttackSelect = (powerIndex: number) => {
     dispatch({ type: 'SELECT_POWER', payload: powerIndex });
@@ -100,7 +110,7 @@ export function BattleScreen() {
         {/* Opponent Character */}
         <div className="space-y-4">
           <h3 className="text-xl font-semibold text-red-200 text-center">Opponent</h3>
-          <CharacterCard character={FIXED_OPPONENT} />
+          <CharacterCard character={opponent} />
         </div>
       </div>
     </div>

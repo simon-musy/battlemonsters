@@ -25,11 +25,12 @@ export interface Opponent {
   mana: number;
   powers: Power[];
   image_url: string;
-  image_prompt: string; // Added image_prompt field
+  image_prompt: string;
 }
 
 export interface GameState {
   character: Character | null;
+  opponent: Opponent | null;
   isLoading: boolean;
   error: string | null;
   selectedPower?: number;
@@ -39,9 +40,10 @@ export interface GameState {
 
 export type GameAction =
   | { type: 'SET_CHARACTER'; payload: Character }
+  | { type: 'SET_OPPONENT'; payload: Opponent }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null }
-  | { type: 'SELECT_POWER'; payload: number }
+  | { type: 'SELECT_POWER'; payload: number | undefined }
   | { type: 'SET_CHARACTER_IMAGE'; payload: string }
   | { type: 'SET_GENERATING_IMAGE'; payload: boolean }
   | { type: 'SET_IMAGE_GENERATION_ERROR'; payload: boolean };
