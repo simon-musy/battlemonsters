@@ -279,7 +279,6 @@ export function BattleStoryScreen() {
         </button>
 
         <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-white mb-2">ME</h2>
           <div className="text-lg font-semibold text-purple-200 mb-2">{character.character_name}</div>
           
           {/* Player HP Bar */}
@@ -339,7 +338,6 @@ export function BattleStoryScreen() {
 
         {/* Actions */}
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-purple-200 mb-4">ACTIONS</h3>
           <div className="space-y-3">
             {character.powers.map((power, index) => (
               <button
@@ -378,7 +376,6 @@ export function BattleStoryScreen() {
         <div className="bg-gray-900/80 backdrop-blur-sm border-b border-purple-500/20 p-6">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-4">
-              <h2 className="text-2xl font-bold text-white mb-2">OPPONENT</h2>
               <div className="text-xl font-semibold text-red-200">{FIXED_OPPONENT.character_name}</div>
             </div>
             
@@ -403,8 +400,6 @@ export function BattleStoryScreen() {
         {/* Story Space - Comic Strip */}
         <div className="flex-1 p-6 overflow-y-auto">
           <div className="max-w-6xl mx-auto">
-            <h3 className="text-2xl font-bold text-white text-center mb-8">BATTLE STORY</h3>
-            
             {battlePanels.length === 0 ? (
               <div className="text-center text-purple-300 py-12">
                 <p className="text-lg">Select an attack to begin the epic battle story!</p>
