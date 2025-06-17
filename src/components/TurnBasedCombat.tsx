@@ -52,6 +52,52 @@ export function TurnBasedCombat() {
     });
   }, [character, opponent, combatState]);
 
+  // Auto-trigger opponent initiative - moved to top to ensure consistent hook order
+  useEffect(() => {
+    if (combatState?.current_phase.phase === 'opponent_initiative' && 
+        combatState.current_phase.status === 'declaring' && 
+        !isProcessing) {
+      const timer = setTimeout(() => {
+        handleOpponentInitiative();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [combatState?.current_phase, isProcessing]);
+
+  const handleOpponentInitiative = async () => {
+    if (isProcessing || !combatState || combatState.current_phase.phase !== 'opponent_initiative') return;
+
+    setIsProcessing(true);
+
+    try {
+      let newState = { ...combatState };
+
+      // Opponent declares action
+      const opponentAction = selectOpponentInitiative(newState.opponent_available_actions);
+      newState.opponent_declared_action = opponentAction;
+      newState.current_phase.initiator_action = opponentAction;
+      newState.current_phase.status = 'reacting';
+      newState.waiting_for_reaction = true;
+
+      setCombatState(newState);
+    } catch (error) {
+      console.error('Error processing opponent initiative:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Debug logging
+  useEffect(() => {
+    console.log('TurnBasedCombat render state:', {
+      character: !!character,
+      opponent: !!opponent,
+      combatState: !!combatState,
+      characterName: character?.character_name,
+      opponentName: opponent?.character_name
+    });
+  }, [character, opponent, combatState]);
+
   if (!character || !opponent) {
     console.log('Missing character or opponent:', { character: !!character, opponent: !!opponent });
     return (
@@ -194,41 +240,6 @@ export function TurnBasedCombat() {
       setIsProcessing(false);
     }
   };
-
-  const handleOpponentInitiative = async () => {
-    if (isProcessing || !combatState || combatState.current_phase.phase !== 'opponent_initiative') return;
-
-    setIsProcessing(true);
-
-    try {
-      let newState = { ...combatState };
-
-      // Opponent declares action
-      const opponentAction = selectOpponentInitiative(newState.opponent_available_actions);
-      newState.opponent_declared_action = opponentAction;
-      newState.current_phase.initiator_action = opponentAction;
-      newState.current_phase.status = 'reacting';
-      newState.waiting_for_reaction = true;
-
-      setCombatState(newState);
-    } catch (error) {
-      console.error('Error processing opponent initiative:', error);
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  // Auto-trigger opponent initiative
-  useEffect(() => {
-    if (combatState?.current_phase.phase === 'opponent_initiative' && 
-        combatState.current_phase.status === 'declaring' && 
-        !isProcessing) {
-      const timer = setTimeout(() => {
-        handleOpponentInitiative();
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [combatState?.current_phase, isProcessing]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
