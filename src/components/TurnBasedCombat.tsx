@@ -22,6 +22,7 @@ export function TurnBasedCombat() {
 
   const [combatState, setCombatState] = useState<CombatState | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showingFinalLogs, setShowingFinalLogs] = useState(false);
 
   // Initialize combat when component mounts
   useEffect(() => {
@@ -47,6 +48,7 @@ export function TurnBasedCombat() {
     if (combatState && character && opponent && 
         combatState.available_actions.length === 0 && 
         !combatState.is_generating_actions &&
+        !combatState.is_battle_ended &&
         (combatState.current_phase.status === 'declaring' || 
          (combatState.current_phase.status === 'reacting' && combatState.waiting_for_reaction))) {
       
@@ -59,13 +61,29 @@ export function TurnBasedCombat() {
   useEffect(() => {
     if (combatState?.current_phase.phase === 'opponent_initiative' && 
         combatState.current_phase.status === 'declaring' && 
-        !isProcessing) {
+        !isProcessing && !combatState.is_battle_ended) {
       const timer = setTimeout(() => {
         handleOpponentInitiative();
       }, 1500);
       return () => clearTimeout(timer);
     }
   }, [combatState?.current_phase, isProcessing]);
+
+  // Handle battle end with final logs display
+  useEffect(() => {
+    if (combatState?.is_battle_ended && !showingFinalLogs) {
+      console.log('Battle ended, showing final logs for 4 seconds...');
+      setShowingFinalLogs(true);
+      
+      // Show final logs for 4 seconds before victory screen
+      const timer = setTimeout(() => {
+        console.log('Final logs display complete, showing victory screen');
+        setShowingFinalLogs(false);
+      }, 4000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [combatState?.is_battle_ended, showingFinalLogs]);
 
   const generateActionsForCurrentPhase = async () => {
     if (!combatState || !character || !opponent) return;
@@ -140,9 +158,11 @@ export function TurnBasedCombat() {
       currentPhase: combatState?.current_phase,
       availableActionsCount: combatState?.available_actions?.length || 0,
       isGeneratingActions: combatState?.is_generating_actions,
-      waitingForReaction: combatState?.waiting_for_reaction
+      waitingForReaction: combatState?.waiting_for_reaction,
+      isBattleEnded: combatState?.is_battle_ended,
+      showingFinalLogs
     });
-  }, [character, opponent, combatState]);
+  }, [character, opponent, combatState, showingFinalLogs]);
 
   if (!character || !opponent) {
     console.log('Missing character or opponent:', { character: !!character, opponent: !!opponent });
@@ -162,7 +182,8 @@ export function TurnBasedCombat() {
     );
   }
 
-  if (combatState.is_battle_ended) {
+  // Show victory screen only after final logs have been displayed
+  if (combatState.is_battle_ended && !showingFinalLogs) {
     return (
       <VictoryScreen
         winner={combatState.winner!}
@@ -223,6 +244,9 @@ export function TurnBasedCombat() {
         newState.current_phase.status = 'completed';
         newState.combat_log.push({ ...newState.current_phase });
 
+        console.log('Player initiative phase completed, resolution:', resolution);
+        console.log('Updated HP - Player:', newState.player_hp, 'Opponent:', newState.opponent_hp);
+
         // Check for victory
         newState = checkVictoryCondition(newState);
 
@@ -230,6 +254,8 @@ export function TurnBasedCombat() {
           // Advance to opponent initiative phase
           await new Promise(resolve => setTimeout(resolve, 2000)); // Show resolution
           newState = advanceCombatPhase(newState);
+        } else {
+          console.log('Battle ended after player initiative phase. Winner:', newState.winner);
         }
 
       } else {
@@ -268,6 +294,9 @@ export function TurnBasedCombat() {
         newState.current_phase.status = 'completed';
         newState.combat_log.push({ ...newState.current_phase });
 
+        console.log('Opponent initiative phase completed, resolution:', resolution);
+        console.log('Updated HP - Player:', newState.player_hp, 'Opponent:', newState.opponent_hp);
+
         // Check for victory
         newState = checkVictoryCondition(newState);
 
@@ -275,6 +304,8 @@ export function TurnBasedCombat() {
           // Advance to next player initiative phase
           await new Promise(resolve => setTimeout(resolve, 2000)); // Show resolution
           newState = advanceCombatPhase(newState);
+        } else {
+          console.log('Battle ended after opponent initiative phase. Winner:', newState.winner);
         }
       }
 
@@ -290,6 +321,31 @@ export function TurnBasedCombat() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900">
       <div className="container mx-auto px-4 py-8">
+        {/* Battle End Overlay */}
+        {combatState.is_battle_ended && showingFinalLogs && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50">
+            <div className="bg-gray-900/90 p-8 rounded-xl border border-purple-500/50 text-center max-w-md">
+              <h2 className={`text-3xl font-bold mb-4 ${
+                combatState.winner === 'player' ? 'text-yellow-400' : 'text-red-400'
+              }`}>
+                {combatState.winner === 'player' ? 'VICTORY!' : 'DEFEAT!'}
+              </h2>
+              <p className="text-purple-200 mb-4">
+                {combatState.winner === 'player' 
+                  ? `${character.character_name} emerges triumphant!`
+                  : `${opponent.character_name} has defeated you!`
+                }
+              </p>
+              <div className="text-sm text-purple-300">
+                Reviewing final combat logs...
+              </div>
+              <div className="mt-4 w-full bg-gray-700 rounded-full h-2">
+                <div className="bg-purple-500 h-2 rounded-full animate-pulse" style={{ width: '100%' }}></div>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Left Column - Combat Stats */}
           <div className="space-y-6">
