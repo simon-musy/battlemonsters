@@ -47,8 +47,10 @@ export function TurnBasedCombat() {
     if (combatState && character && opponent && 
         combatState.available_actions.length === 0 && 
         !combatState.is_generating_actions &&
-        combatState.current_phase.status === 'declaring') {
+        (combatState.current_phase.status === 'declaring' || 
+         (combatState.current_phase.status === 'reacting' && combatState.waiting_for_reaction))) {
       
+      console.log('Generating actions for phase:', combatState.current_phase.phase, 'status:', combatState.current_phase.status);
       generateActionsForCurrentPhase();
     }
   }, [combatState, character, opponent]);
@@ -68,12 +70,15 @@ export function TurnBasedCombat() {
   const generateActionsForCurrentPhase = async () => {
     if (!combatState || !character || !opponent) return;
 
+    console.log('Starting action generation...');
     setCombatState(prev => prev ? { ...prev, is_generating_actions: true } : prev);
 
     try {
       const phase = combatState.waiting_for_reaction ? 'reacting' : 'declaring';
       const opponentAction = combatState.opponent_declared_action;
       const turnNumber = combatState.current_phase.turn_number;
+
+      console.log('Generating actions with params:', { phase, opponentAction, turnNumber });
 
       const dynamicActions = await generateDynamicActions(
         character,
@@ -82,6 +87,8 @@ export function TurnBasedCombat() {
         opponentAction,
         turnNumber
       );
+
+      console.log('Generated actions:', dynamicActions);
 
       setCombatState(prev => prev ? {
         ...prev,
@@ -109,6 +116,10 @@ export function TurnBasedCombat() {
       newState.current_phase.status = 'reacting';
       newState.waiting_for_reaction = true;
       newState.available_actions = []; // Clear actions to trigger regeneration
+      newState.is_generating_actions = false; // Reset generation flag
+
+      console.log('Opponent declared action:', opponentAction);
+      console.log('Setting state to reacting phase, clearing actions for regeneration');
 
       setCombatState(newState);
     } catch (error) {
@@ -125,7 +136,11 @@ export function TurnBasedCombat() {
       opponent: !!opponent,
       combatState: !!combatState,
       characterName: character?.character_name,
-      opponentName: opponent?.character_name
+      opponentName: opponent?.character_name,
+      currentPhase: combatState?.current_phase,
+      availableActionsCount: combatState?.available_actions?.length || 0,
+      isGeneratingActions: combatState?.is_generating_actions,
+      waitingForReaction: combatState?.waiting_for_reaction
     });
   }, [character, opponent, combatState]);
 
