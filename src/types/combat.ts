@@ -3,7 +3,7 @@ export interface CombatAction {
   name: string;
   description: string;
   damage: number;
-  type: 'attack' | 'defend' | 'special' | 'counter';
+  type: 'attack' | 'defend' | 'special' | 'counter' | 'character_trait' | 'funny' | 'reactive' | 'custom_input';
   energy_cost: number;
   strengths: string[]; // What this action is strong against
   weaknesses: string[]; // What this action is weak to
@@ -54,9 +54,10 @@ export interface CombatState {
   waiting_for_reaction: boolean;
   declared_action?: CombatAction;
   opponent_declared_action?: CombatAction;
+  is_generating_actions?: boolean;
 }
 
-export type CombatActionType = 'attack' | 'defend' | 'special' | 'counter';
+export type CombatActionType = 'attack' | 'defend' | 'special' | 'counter' | 'character_trait' | 'funny' | 'reactive' | 'custom_input';
 
 export interface ActionEffectiveness {
   damage_multiplier: number;

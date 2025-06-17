@@ -11,7 +11,8 @@ import {
   selectOpponentReaction, 
   selectOpponentInitiative,
   advanceCombatPhase,
-  checkVictoryCondition
+  checkVictoryCondition,
+  generateDynamicActions
 } from '../utils/combatSystem';
 import type { CombatState, CombatAction } from '../types/combat';
 
@@ -41,16 +42,16 @@ export function TurnBasedCombat() {
     }
   }, [character, opponent, combatState]);
 
-  // Debug logging
+  // Generate dynamic actions when needed
   useEffect(() => {
-    console.log('TurnBasedCombat render state:', {
-      character: !!character,
-      opponent: !!opponent,
-      combatState: !!combatState,
-      characterName: character?.character_name,
-      opponentName: opponent?.character_name
-    });
-  }, [character, opponent, combatState]);
+    if (combatState && character && opponent && 
+        combatState.available_actions.length === 0 && 
+        !combatState.is_generating_actions &&
+        combatState.current_phase.status === 'declaring') {
+      
+      generateActionsForCurrentPhase();
+    }
+  }, [combatState, character, opponent]);
 
   // Auto-trigger opponent initiative - moved to top to ensure consistent hook order
   useEffect(() => {
@@ -63,6 +64,35 @@ export function TurnBasedCombat() {
       return () => clearTimeout(timer);
     }
   }, [combatState?.current_phase, isProcessing]);
+
+  const generateActionsForCurrentPhase = async () => {
+    if (!combatState || !character || !opponent) return;
+
+    setCombatState(prev => prev ? { ...prev, is_generating_actions: true } : prev);
+
+    try {
+      const phase = combatState.waiting_for_reaction ? 'reacting' : 'declaring';
+      const opponentAction = combatState.opponent_declared_action;
+      const turnNumber = combatState.current_phase.turn_number;
+
+      const dynamicActions = await generateDynamicActions(
+        character,
+        opponent,
+        phase,
+        opponentAction,
+        turnNumber
+      );
+
+      setCombatState(prev => prev ? {
+        ...prev,
+        available_actions: dynamicActions,
+        is_generating_actions: false
+      } : prev);
+    } catch (error) {
+      console.error('Failed to generate dynamic actions:', error);
+      setCombatState(prev => prev ? { ...prev, is_generating_actions: false } : prev);
+    }
+  };
 
   const handleOpponentInitiative = async () => {
     if (isProcessing || !combatState || combatState.current_phase.phase !== 'opponent_initiative') return;
@@ -78,6 +108,7 @@ export function TurnBasedCombat() {
       newState.current_phase.initiator_action = opponentAction;
       newState.current_phase.status = 'reacting';
       newState.waiting_for_reaction = true;
+      newState.available_actions = []; // Clear actions to trigger regeneration
 
       setCombatState(newState);
     } catch (error) {

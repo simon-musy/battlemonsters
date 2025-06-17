@@ -1,4 +1,4 @@
-import type { CombatAction, CombatState, CombatPhase, CombatResolution, ActionEffectiveness } from '../types/combat';
+import type { CombatAction, CombatState, CombatPhase, CombatResolution, ActionEffectiveness, Character, Opponent } from '../types/combat';
 
 // Base action templates that can be customized per character
 export const BASE_ACTIONS: Record<string, Omit<CombatAction, 'id'>> = {
@@ -160,6 +160,114 @@ export function createCombatAction(baseAction: string, customizations?: Partial<
   };
 }
 
+export function createCustomInputAction(): CombatAction {
+  return {
+    id: generateActionId(),
+    name: "Custom Action",
+    description: "Type your own action...",
+    damage: 0,
+    type: 'custom_input',
+    energy_cost: 0,
+    strengths: [],
+    weaknesses: [],
+  };
+}
+
+export function createDynamicAction(
+  name: string,
+  description: string,
+  damage: number,
+  energyCost: number,
+  type: 'character_trait' | 'funny' | 'reactive'
+): CombatAction {
+  // Assign strengths and weaknesses based on type
+  let strengths: string[] = [];
+  let weaknesses: string[] = [];
+
+  switch (type) {
+    case 'character_trait':
+      strengths = ['defend', 'special'];
+      weaknesses = ['counter'];
+      break;
+    case 'funny':
+      strengths = ['counter', 'special'];
+      weaknesses = ['attack'];
+      break;
+    case 'reactive':
+      strengths = ['attack', 'defend'];
+      weaknesses = ['special'];
+      break;
+  }
+
+  return {
+    id: generateActionId(),
+    name,
+    description,
+    damage,
+    type,
+    energy_cost: energyCost,
+    strengths,
+    weaknesses,
+  };
+}
+
+export async function generateDynamicActions(
+  character: Character,
+  opponent: Opponent,
+  phase: 'declaring' | 'reacting',
+  opponentAction?: CombatAction,
+  turnNumber?: number
+): Promise<CombatAction[]> {
+  try {
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/dynamic-actions`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          character,
+          opponent,
+          phase,
+          opponent_action: opponentAction,
+          turn_number: turnNumber,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to generate dynamic actions: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.actions || !Array.isArray(data.actions)) {
+      throw new Error('Invalid response format from dynamic actions API');
+    }
+
+    // Convert API response to CombatAction objects
+    const dynamicActions = data.actions.map((action: any) => 
+      createDynamicAction(action.name, action.description, action.damage, action.energy_cost, action.type)
+    );
+
+    // Add the custom input action as the 4th option
+    const customInputAction = createCustomInputAction();
+
+    return [...dynamicActions, customInputAction];
+  } catch (error) {
+    console.error('Failed to generate dynamic actions:', error);
+    
+    // Fallback to static actions if API fails
+    return [
+      createCombatAction('quick_strike'),
+      createCombatAction('block'),
+      createCombatAction('power_surge'),
+      createCustomInputAction(),
+    ];
+  }
+}
+
 export function calculateActionEffectiveness(initiatorAction: CombatAction, reactorAction: CombatAction): ActionEffectiveness {
   const isStrong = initiatorAction.strengths.includes(reactorAction.type);
   const isWeak = initiatorAction.weaknesses.includes(reactorAction.type);
@@ -294,16 +402,18 @@ export function initializeCombatState(
     opponent_max_hp: opponentHp,
     player_max_energy: playerEnergy,
     opponent_max_energy: opponentEnergy,
-    available_actions: generatePlayerActions(),
+    available_actions: [], // Will be populated dynamically
     opponent_available_actions: generateOpponentActions(),
     combat_log: [],
     is_battle_ended: false,
     waiting_for_reaction: false,
+    is_generating_actions: false,
   };
 }
 
 export function generatePlayerActions(): CombatAction[] {
-  // Generate a balanced set of 4 actions for the player to choose from
+  // This is now replaced by generateDynamicActions
+  // Keeping for fallback purposes
   const actionTypes = ['quick_strike', 'block', 'power_surge', 'counter_attack'];
   return actionTypes.map(type => createCombatAction(type));
 }
@@ -361,8 +471,8 @@ export function advanceCombatPhase(state: CombatState): CombatState {
       status: 'declaring',
     };
     
-    // Regenerate actions for new turn
-    newState.available_actions = generatePlayerActions();
+    // Clear actions - they will be regenerated dynamically
+    newState.available_actions = [];
     newState.opponent_available_actions = generateOpponentActions();
     
     // Restore some energy each turn
