@@ -128,6 +128,25 @@ export function BattleScreen() {
     dispatch({ type: 'SELECT_POWER', payload: powerIndex });
   };
 
+  const handleCustomAction = (actionDescription: string) => {
+    // Create a custom action object and add it to the character's current actions
+    const customAction = {
+      name: "Custom Action",
+      description: actionDescription,
+      attack_points: Math.floor(Math.random() * 20) + 15, // Random damage 15-35
+      type: 'custom' as const
+    };
+
+    // Add the custom action to the current actions and select it
+    const currentActions = character.current_actions || [];
+    const updatedActions = [...currentActions, customAction];
+    
+    dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: updatedActions });
+    
+    // Select the custom action (it will be the last one in the array)
+    dispatch({ type: 'SELECT_POWER', payload: updatedActions.length - 1 });
+  };
+
   const handleRetryImageGeneration = () => {
     imageGenerationAttempted.current = false;
     dispatch({ type: 'SET_IMAGE_GENERATION_ERROR', payload: false });
@@ -160,6 +179,7 @@ export function BattleScreen() {
             powers={character.powers}
             battleActions={character.current_actions}
             onPowerSelect={handleAttackSelect}
+            onCustomAction={handleCustomAction}
             isGeneratingActions={isGeneratingActions}
           />
         </div>

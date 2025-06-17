@@ -255,6 +255,28 @@ export function BattleStoryScreen() {
     }
   };
 
+  const handleCustomAction = (actionDescription: string) => {
+    if (!character || battleEnded) return;
+
+    // Create a custom action object
+    const customAction = {
+      name: "Custom Action",
+      description: actionDescription,
+      attack_points: Math.floor(Math.random() * 20) + 15, // Random damage 15-35
+      type: 'custom' as const
+    };
+
+    // Add the custom action to the current actions
+    const currentActions = character.current_actions || [];
+    const updatedActions = [...currentActions, customAction];
+    
+    dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: updatedActions });
+    
+    // Execute the custom action immediately
+    const customActionIndex = updatedActions.length - 1;
+    handleAttack(customActionIndex);
+  };
+
   const retryPanel = (panelIndex: number) => {
     if (battlePanels[panelIndex].isFinalPanel) {
       generateFinalPanel(playerWon);
@@ -279,6 +301,7 @@ export function BattleStoryScreen() {
         playerWon={playerWon}
         onGoBack={goBackToBattle}
         onAttack={handleAttack}
+        onCustomAction={handleCustomAction}
         isGeneratingActions={isGeneratingActions}
       />
 

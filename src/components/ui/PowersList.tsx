@@ -1,5 +1,6 @@
 import React from 'react';
 import { BattleActionButton } from './BattleActionButton';
+import { CustomActionInput } from './CustomActionInput';
 import { Loader2 } from 'lucide-react';
 import type { Power, BattleAction } from '../../types/game';
 
@@ -7,6 +8,7 @@ interface PowersListProps {
   powers?: Power[];
   battleActions?: BattleAction[];
   onPowerSelect: (powerIndex: number) => void;
+  onCustomAction?: (actionDescription: string) => void;
   disabled?: boolean;
   isGeneratingActions?: boolean;
 }
@@ -15,6 +17,7 @@ export function PowersList({
   powers, 
   battleActions, 
   onPowerSelect, 
+  onCustomAction,
   disabled = false,
   isGeneratingActions = false 
 }: PowersListProps) {
@@ -28,17 +31,27 @@ export function PowersList({
             <p className="text-purple-300 text-center">Generating new battle actions...</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {battleActions.map((action, index) => (
-              <BattleActionButton
-                key={`${action.name}-${index}`}
-                action={action}
-                index={index}
+          <>
+            <div className="space-y-3">
+              {battleActions.map((action, index) => (
+                <BattleActionButton
+                  key={`${action.name}-${index}`}
+                  action={action}
+                  index={index}
+                  disabled={disabled}
+                  onClick={onPowerSelect}
+                />
+              ))}
+            </div>
+            
+            {/* Custom Action Input */}
+            {onCustomAction && (
+              <CustomActionInput
+                onExecuteCustomAction={onCustomAction}
                 disabled={disabled}
-                onClick={onPowerSelect}
               />
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
     );
@@ -78,6 +91,14 @@ export function PowersList({
           </button>
         ))}
       </div>
+      
+      {/* Custom Action Input for powers fallback */}
+      {onCustomAction && (
+        <CustomActionInput
+          onExecuteCustomAction={onCustomAction}
+          disabled={disabled}
+        />
+      )}
     </div>
   );
 }

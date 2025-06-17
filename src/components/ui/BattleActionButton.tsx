@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sword, Laugh, Sparkles } from 'lucide-react';
+import { Sword, Laugh, Sparkles, Wand2 } from 'lucide-react';
 import type { BattleAction } from '../../types/game';
 
 interface BattleActionButtonProps {
@@ -18,6 +18,8 @@ export function BattleActionButton({ action, index, disabled, onClick }: BattleA
         return <Laugh className="w-4 h-4" />;
       case 'thematic':
         return <Sparkles className="w-4 h-4" />;
+      case 'custom':
+        return <Wand2 className="w-4 h-4" />;
       default:
         return <Sword className="w-4 h-4" />;
     }
@@ -37,6 +39,10 @@ export function BattleActionButton({ action, index, disabled, onClick }: BattleA
         return disabled 
           ? 'border-gray-600/20 text-gray-500' 
           : 'border-purple-500/20 hover:border-purple-500/40 text-purple-200';
+      case 'custom':
+        return disabled 
+          ? 'border-gray-600/20 text-gray-500' 
+          : 'border-green-500/20 hover:border-green-500/40 text-green-200';
       default:
         return disabled 
           ? 'border-gray-600/20 text-gray-500' 
@@ -54,6 +60,8 @@ export function BattleActionButton({ action, index, disabled, onClick }: BattleA
         return 'bg-gray-800/50 hover:bg-yellow-900/30';
       case 'thematic':
         return 'bg-gray-800/50 hover:bg-purple-900/30';
+      case 'custom':
+        return 'bg-gray-800/50 hover:bg-green-900/30';
       default:
         return 'bg-gray-800/50 hover:bg-purple-900/30';
     }
@@ -67,8 +75,27 @@ export function BattleActionButton({ action, index, disabled, onClick }: BattleA
         return 'Quirky';
       case 'thematic':
         return 'Special';
+      case 'custom':
+        return 'Custom';
       default:
         return 'Action';
+    }
+  };
+
+  const getTypeBadgeColor = (type: string) => {
+    if (disabled) return 'bg-gray-700/50 text-gray-500';
+    
+    switch (type) {
+      case 'generic':
+        return 'bg-blue-900/50 text-blue-300';
+      case 'funny':
+        return 'bg-yellow-900/50 text-yellow-300';
+      case 'thematic':
+        return 'bg-purple-900/50 text-purple-300';
+      case 'custom':
+        return 'bg-green-900/50 text-green-300';
+      default:
+        return 'bg-purple-900/50 text-purple-300';
     }
   };
 
@@ -90,15 +117,7 @@ export function BattleActionButton({ action, index, disabled, onClick }: BattleA
           </h4>
         </div>
         <div className="flex items-center gap-2">
-          <span className={`text-xs px-2 py-1 rounded ${
-            disabled 
-              ? 'bg-gray-700/50 text-gray-500' 
-              : action.type === 'generic' 
-                ? 'bg-blue-900/50 text-blue-300'
-                : action.type === 'funny'
-                  ? 'bg-yellow-900/50 text-yellow-300'
-                  : 'bg-purple-900/50 text-purple-300'
-          }`}>
+          <span className={`text-xs px-2 py-1 rounded ${getTypeBadgeColor(action.type)}`}>
             {getTypeLabel(action.type)}
           </span>
           <span className={`text-xs font-bold ${

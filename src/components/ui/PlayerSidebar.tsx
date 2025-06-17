@@ -13,6 +13,7 @@ interface PlayerSidebarProps {
   playerWon: boolean;
   onGoBack: () => void;
   onAttack: (powerIndex: number) => void;
+  onCustomAction?: (actionDescription: string) => void;
   isGeneratingActions?: boolean;
 }
 
@@ -23,6 +24,7 @@ export function PlayerSidebar({
   playerWon, 
   onGoBack, 
   onAttack,
+  onCustomAction,
   isGeneratingActions = false
 }: PlayerSidebarProps) {
   return (
@@ -47,6 +49,7 @@ export function PlayerSidebar({
         powers={character.powers}
         battleActions={character.current_actions}
         onPowerSelect={onAttack} 
+        onCustomAction={onCustomAction}
         disabled={battleEnded}
         isGeneratingActions={isGeneratingActions}
       />

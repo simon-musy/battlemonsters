@@ -10,7 +10,7 @@ export interface BattleAction {
   name: string;
   description: string;
   attack_points: number;
-  type: 'generic' | 'funny' | 'thematic';
+  type: 'generic' | 'funny' | 'thematic' | 'custom';
 }
 
 export interface Character {
