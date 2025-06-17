@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sword, Shield, Zap, ArrowRight, Vs } from 'lucide-react';
+import { Sword, Shield, Zap, ArrowRight, AArrowDown as Vs } from 'lucide-react';
 import type { CombatState, Character, Opponent } from '../../types/combat';
 
 interface CombatPhaseDisplayProps {
