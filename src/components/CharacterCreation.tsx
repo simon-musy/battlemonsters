@@ -2,13 +2,13 @@ import React from 'react';
 import { Swords, AlertCircle } from 'lucide-react';
 import { PromptInput } from './PromptInput';
 import { useGame } from '../context/GameContext';
-import { BattleScreen } from './BattleScreen';
+import { TurnBasedCombat } from './TurnBasedCombat';
 
 export function CharacterCreation() {
   const { state } = useGame();
 
   if (state.character) {
-    return <BattleScreen />;
+    return <TurnBasedCombat />;
   }
 
   return (

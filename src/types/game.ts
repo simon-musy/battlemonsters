@@ -58,3 +58,6 @@ export type GameAction =
   | { type: 'SET_IMAGE_GENERATION_ERROR'; payload: boolean }
   | { type: 'SET_CHARACTER_ACTIONS'; payload: BattleAction[] }
   | { type: 'SET_GENERATING_ACTIONS'; payload: boolean };
+
+// Re-export combat types for compatibility
+export type { CombatAction, CombatState, CombatPhase, CombatResolution } from './combat';
