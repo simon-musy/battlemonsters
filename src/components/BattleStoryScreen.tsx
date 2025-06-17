@@ -67,15 +67,23 @@ export function BattleStoryScreen() {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to generate battle actions');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('Battle actions API error:', errorMessage);
+        throw new Error(`Failed to generate battle actions: ${errorMessage}`);
       }
 
       const data = await response.json();
-      if (data.actions) {
+      if (data.actions && Array.isArray(data.actions) && data.actions.length > 0) {
         dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: data.actions });
+      } else {
+        console.warn('No valid actions returned, keeping current actions');
+        // Keep using current actions if new generation fails
       }
     } catch (error) {
       console.error('Failed to generate battle actions:', error);
+      console.log('Continuing with current actions due to generation failure');
+      // Continue with current actions - don't break the battle flow
     } finally {
       dispatch({ type: 'SET_GENERATING_ACTIONS', payload: false });
     }

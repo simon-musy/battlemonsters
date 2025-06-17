@@ -93,18 +93,25 @@ export function BattleScreen() {
       );
 
       if (!response.ok) {
-        throw new Error('Failed to generate battle actions');
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error || `HTTP ${response.status}: ${response.statusText}`;
+        console.error('Battle actions API error:', errorMessage);
+        throw new Error(`Failed to generate battle actions: ${errorMessage}`);
       }
 
       const data = await response.json();
-      if (data.actions) {
+      if (data.actions && Array.isArray(data.actions) && data.actions.length > 0) {
         dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: data.actions });
       } else {
-        throw new Error('No actions returned');
+        console.warn('No valid actions returned, using character powers as fallback');
+        // Fallback to using character powers if action generation fails
+        dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: character.powers });
       }
     } catch (error) {
       console.error('Failed to generate battle actions:', error);
       // Fallback to using character powers if action generation fails
+      console.log('Using character powers as fallback actions');
+      dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: character.powers });
     } finally {
       dispatch({ type: 'SET_GENERATING_ACTIONS', payload: false });
     }
