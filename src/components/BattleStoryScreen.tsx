@@ -28,7 +28,8 @@ export function BattleStoryScreen() {
   useEffect(() => {
     // Generate the first battle panel when component mounts
     if (state.selectedPower !== undefined && character && opponent) {
-      generateBattlePanel(0);
+      const actions = character.current_actions || character.powers;
+      generateBattlePanel(0, state.selectedPower, actions);
     }
   }, []);
 
@@ -158,12 +159,14 @@ export function BattleStoryScreen() {
     }
   };
 
-  const generateBattlePanel = async (panelIndex: number) => {
-    if (!character || !opponent) return;
+  const generateBattlePanel = async (panelIndex: number, selectedPowerIndex: number, actionsArray: any[]) => {
+    if (!character || !opponent || !actionsArray || selectedPowerIndex >= actionsArray.length) return;
 
-    // Use current actions if available, otherwise fall back to powers
-    const actions = character.current_actions || character.powers;
-    const selectedAction = actions[state.selectedPower || 0];
+    const selectedAction = actionsArray[selectedPowerIndex];
+    if (!selectedAction || !selectedAction.name) {
+      console.error('Invalid action selected:', selectedAction);
+      return;
+    }
     
     // Enhanced battle prompts with detailed character aesthetics
     const prompt = `Epic fantasy battle scene: ${character.character_name} (${character.image_prompt}) unleashing devastating ${selectedAction.name} attack against ${opponent.character_name} (${opponent.image_prompt}). 
@@ -239,14 +242,17 @@ export function BattleStoryScreen() {
     }
   };
 
-  const handleAttack = async (powerIndex: number) => {
+  const handleAttack = async (powerIndex: number, actionsOverride?: any[]) => {
     if (!character || battleEnded) return;
     
     dispatch({ type: 'SELECT_POWER', payload: powerIndex });
     const nextPanelIndex = battlePanels.length;
     
-    // Generate new battle panel
-    await generateBattlePanel(nextPanelIndex);
+    // Use provided actions or fall back to current actions
+    const actions = actionsOverride || character.current_actions || character.powers;
+    
+    // Generate new battle panel with the specific actions array
+    await generateBattlePanel(nextPanelIndex, powerIndex, actions);
     
     // Generate new actions for next turn (if battle continues)
     if (!battleEnded) {
@@ -272,16 +278,19 @@ export function BattleStoryScreen() {
     
     dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: updatedActions });
     
-    // Execute the custom action immediately
+    // Execute the custom action immediately with the updated actions array
     const customActionIndex = updatedActions.length - 1;
-    handleAttack(customActionIndex);
+    handleAttack(customActionIndex, updatedActions);
   };
 
   const retryPanel = (panelIndex: number) => {
     if (battlePanels[panelIndex].isFinalPanel) {
       generateFinalPanel(playerWon);
     } else {
-      generateBattlePanel(panelIndex);
+      // For retry, use the current selected power and actions
+      const actions = character?.current_actions || character?.powers || [];
+      const selectedPowerIndex = state.selectedPower || 0;
+      generateBattlePanel(panelIndex, selectedPowerIndex, actions);
     }
   };
 
