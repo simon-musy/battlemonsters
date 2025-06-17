@@ -16,13 +16,14 @@ interface BattlePanel {
 
 export function BattleStoryScreen() {
   const { state, dispatch } = useGame();
-  const { character, opponent } = state;
+  const { character, opponent, isGeneratingActions } = state;
   
   const [playerHp, setPlayerHp] = useState(character?.hp || 100);
   const [opponentHp, setOpponentHp] = useState(opponent?.hp || 100);
   const [battlePanels, setBattlePanels] = useState<BattlePanel[]>([]);
   const [battleEnded, setBattleEnded] = useState(false);
   const [playerWon, setPlayerWon] = useState(false);
+  const [turnNumber, setTurnNumber] = useState(1);
 
   useEffect(() => {
     // Generate the first battle panel when component mounts
@@ -43,6 +44,42 @@ export function BattleStoryScreen() {
       generateFinalPanel(true);
     }
   }, [playerHp, opponentHp, battleEnded]);
+
+  const generateNewActions = async () => {
+    if (!character || !opponent || battleEnded) return;
+
+    dispatch({ type: 'SET_GENERATING_ACTIONS', payload: true });
+    
+    try {
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/battle-actions`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            character,
+            opponent,
+            turn_number: turnNumber + 1
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to generate battle actions');
+      }
+
+      const data = await response.json();
+      if (data.actions) {
+        dispatch({ type: 'SET_CHARACTER_ACTIONS', payload: data.actions });
+      }
+    } catch (error) {
+      console.error('Failed to generate battle actions:', error);
+    } finally {
+      dispatch({ type: 'SET_GENERATING_ACTIONS', payload: false });
+    }
+  };
 
   const generateFinalPanel = async (victory: boolean) => {
     if (!character) return;
@@ -116,12 +153,14 @@ export function BattleStoryScreen() {
   const generateBattlePanel = async (panelIndex: number) => {
     if (!character || !opponent) return;
 
-    const selectedPower = character.powers[state.selectedPower || 0];
+    // Use current actions if available, otherwise fall back to powers
+    const actions = character.current_actions || character.powers;
+    const selectedAction = actions[state.selectedPower || 0];
     
     // Enhanced battle prompts with detailed character aesthetics
-    const prompt = `Epic fantasy battle scene: ${character.character_name} (${character.image_prompt}) unleashing devastating ${selectedPower.name} attack against ${opponent.character_name} (${opponent.image_prompt}). 
+    const prompt = `Epic fantasy battle scene: ${character.character_name} (${character.image_prompt}) unleashing devastating ${selectedAction.name} attack against ${opponent.character_name} (${opponent.image_prompt}). 
     
-    Action: ${selectedPower.description}. The attacker shows ${character.description} while the defender displays ${opponent.description}.
+    Action: ${selectedAction.description}. The attacker shows ${character.description} while the defender displays ${opponent.description}.
     
     Visual style: Intense combat action, explosive magical effects, dramatic lighting with sparks and energy, debris flying through the air, fierce expressions showing determination and pain, dynamic action poses mid-combat, cinematic battle photography, high contrast lighting, magical sparks and flames, destruction and chaos around them, epic confrontation, dark fantasy art style with vibrant magical effects.`;
 
@@ -197,7 +236,15 @@ export function BattleStoryScreen() {
     
     dispatch({ type: 'SELECT_POWER', payload: powerIndex });
     const nextPanelIndex = battlePanels.length;
+    
+    // Generate new battle panel
     await generateBattlePanel(nextPanelIndex);
+    
+    // Generate new actions for next turn (if battle continues)
+    if (!battleEnded) {
+      setTurnNumber(prev => prev + 1);
+      await generateNewActions();
+    }
   };
 
   const retryPanel = (panelIndex: number) => {
@@ -224,6 +271,7 @@ export function BattleStoryScreen() {
         playerWon={playerWon}
         onGoBack={goBackToBattle}
         onAttack={handleAttack}
+        isGeneratingActions={isGeneratingActions}
       />
 
       {/* Main Content Area */}

@@ -13,6 +13,7 @@ interface PlayerSidebarProps {
   playerWon: boolean;
   onGoBack: () => void;
   onAttack: (powerIndex: number) => void;
+  isGeneratingActions?: boolean;
 }
 
 export function PlayerSidebar({ 
@@ -21,7 +22,8 @@ export function PlayerSidebar({
   battleEnded, 
   playerWon, 
   onGoBack, 
-  onAttack 
+  onAttack,
+  isGeneratingActions = false
 }: PlayerSidebarProps) {
   return (
     <div className="w-80 bg-gray-900/80 backdrop-blur-sm border-r border-purple-500/20 p-6 flex flex-col">
@@ -41,7 +43,13 @@ export function PlayerSidebar({
       </div>
 
       <BattleStatus battleEnded={battleEnded} playerWon={playerWon} />
-      <PowersList powers={character.powers} onPowerSelect={onAttack} disabled={battleEnded} />
+      <PowersList 
+        powers={character.powers}
+        battleActions={character.current_actions}
+        onPowerSelect={onAttack} 
+        disabled={battleEnded}
+        isGeneratingActions={isGeneratingActions}
+      />
     </div>
   );
 }
