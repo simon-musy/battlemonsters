@@ -63,3 +63,44 @@ export interface ActionEffectiveness {
   description: string;
   is_effective: boolean;
 }
+
+// Re-export for compatibility with existing game types
+export interface Character {
+  character_name: string;
+  description: string;
+  hp: number;
+  energy: number;
+  mana: number;
+  powers: Array<{
+    name: string;
+    description: string;
+    energy_cost: number;
+    cooldown: number;
+    damage_range: string;
+  }>;
+  image_prompt: string;
+  image_url?: string;
+  current_actions?: Array<{
+    name: string;
+    description: string;
+    attack_points: number;
+    type: 'generic' | 'funny' | 'thematic' | 'custom';
+  }>;
+}
+
+export interface Opponent {
+  character_name: string;
+  description: string;
+  hp: number;
+  energy: number;
+  mana: number;
+  powers: Array<{
+    name: string;
+    description: string;
+    energy_cost: number;
+    cooldown: number;
+    damage_range: string;
+  }>;
+  image_url: string;
+  image_prompt: string;
+}

@@ -25,17 +25,44 @@ export function TurnBasedCombat() {
   // Initialize combat when component mounts
   useEffect(() => {
     if (character && opponent && !combatState) {
+      console.log('Initializing combat state...');
+      console.log('Character:', character);
+      console.log('Opponent:', opponent);
+      
       const initialState = initializeCombatState(
         character.hp,
         opponent.hp,
         character.energy,
         opponent.energy
       );
+      
+      console.log('Initial combat state:', initialState);
       setCombatState(initialState);
     }
   }, [character, opponent, combatState]);
 
-  if (!character || !opponent || !combatState) {
+  // Debug logging
+  useEffect(() => {
+    console.log('TurnBasedCombat render state:', {
+      character: !!character,
+      opponent: !!opponent,
+      combatState: !!combatState,
+      characterName: character?.character_name,
+      opponentName: opponent?.character_name
+    });
+  }, [character, opponent, combatState]);
+
+  if (!character || !opponent) {
+    console.log('Missing character or opponent:', { character: !!character, opponent: !!opponent });
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
+        <div className="text-white text-xl">Loading characters...</div>
+      </div>
+    );
+  }
+
+  if (!combatState) {
+    console.log('Combat state not initialized yet');
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex items-center justify-center">
         <div className="text-white text-xl">Initializing Combat...</div>
